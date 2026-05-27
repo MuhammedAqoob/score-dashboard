@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { Timestamp } from "firebase/firestore";
+import Link from "next/link";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -73,6 +74,14 @@ function DashboardContent() {
             Logout
           </button>
         </header>
+
+        <Link
+          className="rounded-lg border border-emerald-900/70 bg-emerald-950/30 p-5 transition-colors hover:border-emerald-500"
+          href="/prompts"
+        >
+          <p className="text-sm font-medium text-emerald-400">Daily Prompt</p>
+          <p className="mt-2 text-lg font-semibold">Open current prompt</p>
+        </Link>
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-5">
