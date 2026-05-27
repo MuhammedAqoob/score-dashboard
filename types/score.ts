@@ -1,10 +1,18 @@
 export type ScoreKey =
   | "problemSolving"
-  | "creativity"
+  | "brainstorming"
+  | "researchSkill"
   | "learningSpeed"
   | "analyticalThinking"
-  | "researchSkill"
-  | "communicationClarity";
+  | "creativity"
+  | "technicalLogicalThinking"
+  | "communicationClarity"
+  | "decisionMaking"
+  | "adaptability"
+  | "selfCorrection"
+  | "planningExecution"
+  | "persistence"
+  | "promptQuality";
 
 export type ScoreMap = Partial<Record<ScoreKey, number>>;
 
@@ -17,5 +25,6 @@ export type ScoreCategory = {
 
 export type LeaderboardEntry = {
   username: string;
-  overallScore: number;
+  averageScore: number;
+  submissionCount: number;
 };

@@ -1,47 +1,58 @@
-import {
-  collection,
-  getDocs,
-  limit,
-  onSnapshot,
-  orderBy,
-  query,
-} from "firebase/firestore";
+import { collection, getDocs, onSnapshot, query } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { LeaderboardEntry } from "@/types/score";
 
 const SUBMISSIONS_COLLECTION = "submissions";
 
-export async function fetchLeaderboard(limitCount = 10) {
-  const leaderboardQuery = query(
-    collection(db, SUBMISSIONS_COLLECTION),
-    orderBy("overallScore", "desc"),
-    limit(limitCount * 5),
-  );
-  const leaderboardSnapshot = await getDocs(leaderboardQuery);
-  const bestScoresByUser = new Map<string, number>();
+type ScoreAccumulator = {
+  total: number;
+  count: number;
+};
 
-  leaderboardSnapshot.docs.forEach((submissionDocument) => {
-    const data = submissionDocument.data();
-    const username = String(data.username ?? "");
-    const overallScore = Number(data.overallScore ?? 0);
+function buildLeaderboard(
+  submissions: Array<Record<string, unknown>>,
+  limitCount: number,
+) {
+  const scoresByUser = new Map<string, ScoreAccumulator>();
 
-    if (!username) {
+  submissions.forEach((submission) => {
+    const username = String(submission.username ?? "");
+    const validated = Boolean(submission.validated);
+    const calculatedScore = Number(submission.calculatedScore ?? 0);
+
+    if (!username || !validated) {
       return;
     }
 
-    const currentBest = bestScoresByUser.get(username);
+    const current = scoresByUser.get(username) ?? { total: 0, count: 0 };
 
-    if (currentBest === undefined || overallScore > currentBest) {
-      bestScoresByUser.set(username, overallScore);
-    }
+    scoresByUser.set(username, {
+      total: current.total + calculatedScore,
+      count: current.count + 1,
+    });
   });
 
-  return Array.from(bestScoresByUser.entries()).map<LeaderboardEntry>(
-    ([username, overallScore]) => ({
+  return Array.from(scoresByUser.entries())
+    .map<LeaderboardEntry>(([username, scoreData]) => ({
       username,
-      overallScore,
-    }),
-  ).slice(0, limitCount);
+      averageScore: Math.round(scoreData.total / scoreData.count),
+      submissionCount: scoreData.count,
+    }))
+    .sort((first, second) => second.averageScore - first.averageScore)
+    .slice(0, limitCount);
+}
+
+export async function fetchLeaderboard(limitCount = 10) {
+  const leaderboardSnapshot = await getDocs(
+    query(collection(db, SUBMISSIONS_COLLECTION)),
+  );
+
+  return buildLeaderboard(
+    leaderboardSnapshot.docs.map((submissionDocument) =>
+      submissionDocument.data(),
+    ),
+    limitCount,
+  );
 }
 
 export function subscribeToLeaderboard(
@@ -49,41 +60,14 @@ export function subscribeToLeaderboard(
   onUpdate: (entries: LeaderboardEntry[]) => void,
   onError: (error: Error) => void,
 ) {
-  const leaderboardQuery = query(
-    collection(db, SUBMISSIONS_COLLECTION),
-    orderBy("overallScore", "desc"),
-    limit(limitCount * 5),
-  );
-
   return onSnapshot(
-    leaderboardQuery,
+    query(collection(db, SUBMISSIONS_COLLECTION)),
     (snapshot) => {
-      const bestScoresByUser = new Map<string, number>();
-
-      snapshot.docs.forEach((submissionDocument) => {
-        const data = submissionDocument.data();
-        const analyzed = Boolean(data.analyzed);
-        const username = String(data.username ?? "");
-        const overallScore = Number(data.overallScore ?? 0);
-
-        if (!analyzed || !username) {
-          return;
-        }
-
-        const currentBest = bestScoresByUser.get(username);
-
-        if (currentBest === undefined || overallScore > currentBest) {
-          bestScoresByUser.set(username, overallScore);
-        }
-      });
-
       onUpdate(
-        Array.from(bestScoresByUser.entries())
-          .map<LeaderboardEntry>(([username, overallScore]) => ({
-            username,
-            overallScore,
-          }))
-          .slice(0, limitCount),
+        buildLeaderboard(
+          snapshot.docs.map((submissionDocument) => submissionDocument.data()),
+          limitCount,
+        ),
       );
     },
     onError,

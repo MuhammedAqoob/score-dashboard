@@ -1,12 +1,24 @@
-import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  serverTimestamp,
+  setDoc,
+} from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { analyzeResponse } from "@/services/analysisService";
+import { fetchActivePrompt } from "@/services/promptService";
 import { CreateSubmissionInput } from "@/types/submission";
 
 const SUBMISSIONS_COLLECTION = "submissions";
 
 function getSubmissionsCollectionRef() {
   return collection(db, SUBMISSIONS_COLLECTION);
+}
+
+function getSubmissionId(username: string, promptVersion: number) {
+  return `${encodeURIComponent(username)}_${promptVersion}`;
 }
 
 export async function createSubmission(input: CreateSubmissionInput) {
@@ -16,19 +28,48 @@ export async function createSubmission(input: CreateSubmissionInput) {
     throw new Error("Submission cannot be empty.");
   }
 
+  const activePrompt = await fetchActivePrompt();
+
+  if (!activePrompt) {
+    throw new Error("No active prompt is available.");
+  }
+
+  if (
+    input.promptId !== activePrompt.id ||
+    input.promptVersion !== activePrompt.version
+  ) {
+    throw new Error("Prompt version is outdated. Refresh and try again.");
+  }
+
+  const submissionRef = doc(
+    db,
+    SUBMISSIONS_COLLECTION,
+    getSubmissionId(input.username, activePrompt.version),
+  );
+  const existingSubmission = await getDoc(submissionRef);
+
+  if (existingSubmission.exists()) {
+    throw new Error("You already submitted for this prompt version.");
+  }
+
   const analysis = analyzeResponse(responseText);
 
-  const submissionDocument = await addDoc(getSubmissionsCollectionRef(), {
+  await setDoc(submissionRef, {
     username: input.username,
-    promptId: input.promptId,
-    promptVersion: input.promptVersion,
+    promptId: activePrompt.id,
+    promptVersion: activePrompt.version,
     responseText,
-    submittedAt: serverTimestamp(),
-    analyzed: analysis.analyzed,
     scores: analysis.scores,
-    overallScore: analysis.overallScore,
-    score: analysis.overallScore,
+    aiReportedScore: analysis.aiReportedScore,
+    calculatedScore: analysis.calculatedScore,
+    validated: analysis.validated,
+    submittedAt: serverTimestamp(),
   });
 
-  return submissionDocument.id;
+  return submissionRef.id;
+}
+
+export async function getSubmissionCount() {
+  const submissionsSnapshot = await getDocs(getSubmissionsCollectionRef());
+  return submissionsSnapshot.size;
 }

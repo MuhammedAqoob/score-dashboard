@@ -159,7 +159,7 @@ export default function Home() {
                   <div className="flex flex-col gap-4 border-b border-zinc-800 pb-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                       <p className="text-sm text-zinc-400">
-                        Version v{prompt.version} · Created{" "}
+                        Version v{prompt.version} - Created{" "}
                         {formatDate(prompt.createdAt)}
                       </p>
                       <h2 className="mt-2 text-2xl font-semibold">

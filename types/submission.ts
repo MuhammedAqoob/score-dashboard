@@ -7,10 +7,10 @@ export type Submission = {
   promptVersion: number;
   responseText: string;
   submittedAt?: Timestamp;
-  analyzed: boolean;
-  score: number;
   scores: ScoreMap;
-  overallScore: number;
+  aiReportedScore: number;
+  calculatedScore: number;
+  validated: boolean;
 };
 
 export type CreateSubmissionInput = {

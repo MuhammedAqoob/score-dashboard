@@ -28,12 +28,15 @@ export function LeaderboardPreview() {
           {entries.map((entry, index) => (
             <li
               className="flex items-center justify-between rounded-md bg-zinc-950 px-3 py-2 text-sm"
-              key={`${entry.username}-${entry.overallScore}`}
+              key={entry.username}
             >
-              <span className="text-zinc-300">
-                {index + 1}. {entry.username}
+              <span className="text-zinc-300">{index + 1}. {entry.username}</span>
+              <span className="text-right">
+                <span className="block font-semibold">{entry.averageScore}</span>
+                <span className="text-xs text-zinc-500">
+                  {entry.submissionCount} submissions
+                </span>
               </span>
-              <span className="font-semibold">{entry.overallScore}</span>
             </li>
           ))}
         </ol>
