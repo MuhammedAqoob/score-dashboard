@@ -78,6 +78,10 @@ export async function loginUserProfile(
     throw new Error("Username or password is incorrect.");
   }
 
+  if (!profile.approved) {
+    throw new Error("Your account is waiting for admin approval.");
+  }
+
   await updateDoc(getUserProfileRef(cleanUsername), {
     currentUid,
   });

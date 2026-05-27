@@ -9,6 +9,7 @@ export type ScoreKey =
   | "communicationClarity"
   | "decisionMaking"
   | "adaptability"
+  | "curiosityInitiative"
   | "selfCorrection"
   | "planningExecution"
   | "persistence"

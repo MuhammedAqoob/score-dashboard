@@ -1,23 +1,27 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useSyncExternalStore } from "react";
 import {
   getAdminSession,
+  getServerAdminSession,
   loginAdmin,
   logoutAdmin,
+  subscribeToAdminSession,
 } from "@/services/adminSession";
 
 export function useAdminAuth() {
-  const [isAdmin, setIsAdmin] = useState(() => getAdminSession());
+  const isAdmin = useSyncExternalStore(
+    subscribeToAdminSession,
+    getAdminSession,
+    getServerAdminSession,
+  );
 
   const login = useCallback((username: string, password: string) => {
     loginAdmin(username, password);
-    setIsAdmin(true);
   }, []);
 
   const logout = useCallback(() => {
     logoutAdmin();
-    setIsAdmin(false);
   }, []);
 
   return {

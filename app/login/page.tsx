@@ -16,7 +16,7 @@ export default function LoginPage() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!loading && profile) {
+    if (!loading && profile?.approved) {
       router.replace("/dashboard");
     }
   }, [loading, profile, router]);
@@ -44,6 +44,8 @@ export default function LoginPage() {
 
       if (mode === "signup") {
         await signup(cleanUsername, password);
+        setMessage("Profile created. Wait for admin approval before logging in.");
+        return;
       } else {
         await login(cleanUsername, password);
       }

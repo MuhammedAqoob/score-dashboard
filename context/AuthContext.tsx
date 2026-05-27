@@ -109,15 +109,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signup = useCallback(
     async (username: string, password: string) => {
       const anonymousUser = firebaseUser ?? (await createAnonymousSession());
-      const createdProfile = await createUserProfile(
-        username,
-        password,
-        anonymousUser.uid,
-      );
+      await createUserProfile(username, password, anonymousUser.uid);
 
       setFirebaseUser(anonymousUser);
-      setProfile(createdProfile);
-      setSessionUsername(createdProfile.username);
+      setProfile(null);
+      clearSessionUsername();
     },
     [firebaseUser],
   );

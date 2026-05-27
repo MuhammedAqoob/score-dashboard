@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { AppNav } from "@/components/AppNav";
 import { AuthProvider } from "@/context/AuthContext";
 import "./globals.css";
 
@@ -15,7 +16,10 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full antialiased">
       <body className="min-h-full flex flex-col">
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <AppNav />
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );

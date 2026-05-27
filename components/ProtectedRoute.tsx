@@ -11,7 +11,7 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && firebaseUser && !profile) {
+    if (!loading && firebaseUser && (!profile || !profile.approved)) {
       router.replace("/login");
     }
   }, [firebaseUser, loading, profile, router]);
@@ -30,7 +30,7 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
     );
   }
 
-  if (!firebaseUser || !profile) {
+  if (!firebaseUser || !profile || !profile.approved) {
     return <LoadingState message="Redirecting to login..." />;
   }
 

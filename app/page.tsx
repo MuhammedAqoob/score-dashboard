@@ -21,8 +21,9 @@ function formatDate(timestamp?: Timestamp) {
 }
 
 export default function Home() {
-  const { profile, loading: authLoading } = useAuth();
+  const { profile, loading: authLoading, logout } = useAuth();
   const { prompt, loading: promptLoading, error: promptError } = useActivePrompt();
+  const canSubmit = Boolean(profile?.approved);
   const [responseText, setResponseText] = useState("");
   const [copyMessage, setCopyMessage] = useState("");
   const [submissionMessage, setSubmissionMessage] = useState("");
@@ -111,13 +112,28 @@ export default function Home() {
           <div className="flex gap-3">
             {authLoading ? (
               <p className="text-sm text-zinc-400">Checking session...</p>
+            ) : profile?.approved ? (
+              <>
+                <Link
+                  className="rounded-md bg-zinc-100 px-4 py-2 text-sm font-semibold text-zinc-950"
+                  href="/dashboard"
+                >
+                  Dashboard
+                </Link>
+              </>
             ) : profile ? (
-              <Link
-                className="rounded-md bg-zinc-100 px-4 py-2 text-sm font-semibold text-zinc-950"
-                href="/dashboard"
-              >
-                Dashboard
-              </Link>
+              <>
+                <span className="rounded-md border border-zinc-700 px-4 py-2 text-sm text-zinc-300">
+                  Waiting for approval
+                </span>
+                <button
+                  className="rounded-md bg-zinc-100 px-4 py-2 text-sm font-semibold text-zinc-950"
+                  onClick={logout}
+                  type="button"
+                >
+                  Logout
+                </button>
+              </>
             ) : (
               <>
                 <Link
@@ -139,55 +155,65 @@ export default function Home() {
 
         <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
           <section className="flex flex-col gap-6">
-            <article className="rounded-lg border border-zinc-800 bg-zinc-900 p-5">
-              {promptLoading && (
-                <p className="text-sm text-zinc-400">Loading prompt...</p>
-              )}
+            {canSubmit ? (
+              <article className="rounded-lg border border-zinc-800 bg-zinc-900 p-5">
+                {promptLoading && (
+                  <p className="text-sm text-zinc-400">Loading prompt...</p>
+                )}
 
-              {!promptLoading && promptError && (
-                <p className="text-sm text-red-200">{promptError}</p>
-              )}
+                {!promptLoading && promptError && (
+                  <p className="text-sm text-red-200">{promptError}</p>
+                )}
 
-              {!promptLoading && !promptError && !prompt && (
-                <p className="text-sm text-zinc-400">
-                  No active prompt is available yet.
-                </p>
-              )}
+                {!promptLoading && !promptError && !prompt && (
+                  <p className="text-sm text-zinc-400">
+                    No active prompt is available yet.
+                  </p>
+                )}
 
-              {prompt && (
-                <>
-                  <div className="flex flex-col gap-4 border-b border-zinc-800 pb-4 sm:flex-row sm:items-start sm:justify-between">
-                    <div>
-                      <p className="text-sm text-zinc-400">
-                        Version v{prompt.version} - Created{" "}
-                        {formatDate(prompt.createdAt)}
-                      </p>
-                      <h2 className="mt-2 text-2xl font-semibold">
-                        {prompt.title}
-                      </h2>
+                {prompt && (
+                  <>
+                    <div className="flex flex-col gap-4 border-b border-zinc-800 pb-4 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <p className="text-sm text-zinc-400">
+                          Version v{prompt.version} - Created{" "}
+                          {formatDate(prompt.createdAt)}
+                        </p>
+                        <h2 className="mt-2 text-2xl font-semibold">
+                          {prompt.title}
+                        </h2>
+                      </div>
+
+                      <button
+                        className="rounded-md bg-emerald-500 px-4 py-2 text-sm font-semibold text-zinc-950"
+                        onClick={handleCopyPrompt}
+                        type="button"
+                      >
+                        Copy Prompt
+                      </button>
                     </div>
 
-                    <button
-                      className="rounded-md bg-emerald-500 px-4 py-2 text-sm font-semibold text-zinc-950"
-                      onClick={handleCopyPrompt}
-                      type="button"
-                    >
-                      Copy Prompt
-                    </button>
-                  </div>
+                    <pre className="mt-5 whitespace-pre-wrap rounded-md border border-zinc-800 bg-zinc-950 p-4 text-sm leading-6 text-zinc-100">
+                      {prompt.content}
+                    </pre>
 
-                  <pre className="mt-5 whitespace-pre-wrap rounded-md border border-zinc-800 bg-zinc-950 p-4 text-sm leading-6 text-zinc-100">
-                    {prompt.content}
-                  </pre>
+                    {copyMessage && (
+                      <p className="mt-3 text-sm text-zinc-300">{copyMessage}</p>
+                    )}
+                  </>
+                )}
+              </article>
+            ) : (
+              <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-5">
+                <h2 className="text-xl font-semibold">Leaderboard is public</h2>
+                <p className="mt-2 text-sm text-zinc-400">
+                  Log in with an admin-approved account to view the official
+                  prompt and submit AI results.
+                </p>
+              </div>
+            )}
 
-                  {copyMessage && (
-                    <p className="mt-3 text-sm text-zinc-300">{copyMessage}</p>
-                  )}
-                </>
-              )}
-            </article>
-
-            {profile ? (
+            {canSubmit ? (
               <form
                 className="rounded-lg border border-zinc-800 bg-zinc-900 p-5"
                 onSubmit={handleSubmitResponse}
