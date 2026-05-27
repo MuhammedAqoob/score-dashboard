@@ -1,5 +1,6 @@
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { analyzeResponse } from "@/services/analysisService";
 import { CreateSubmissionInput } from "@/types/submission";
 
 const SUBMISSIONS_COLLECTION = "submissions";
@@ -15,14 +16,18 @@ export async function createSubmission(input: CreateSubmissionInput) {
     throw new Error("Submission cannot be empty.");
   }
 
+  const analysis = analyzeResponse(responseText);
+
   const submissionDocument = await addDoc(getSubmissionsCollectionRef(), {
     username: input.username,
     promptId: input.promptId,
     promptVersion: input.promptVersion,
     responseText,
     submittedAt: serverTimestamp(),
-    analyzed: false,
-    score: 0,
+    analyzed: analysis.analyzed,
+    scores: analysis.scores,
+    overallScore: analysis.overallScore,
+    score: analysis.overallScore,
   });
 
   return submissionDocument.id;

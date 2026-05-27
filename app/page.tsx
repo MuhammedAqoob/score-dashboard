@@ -3,6 +3,7 @@
 import { ChangeEvent, FormEvent, useState } from "react";
 import Link from "next/link";
 import { Timestamp } from "firebase/firestore";
+import { LeaderboardPreview } from "@/components/LeaderboardPreview";
 import { useActivePrompt } from "@/hooks/useActivePrompt";
 import { useAuth } from "@/hooks/useAuth";
 import { createSubmission } from "@/services/submissionService";
@@ -18,12 +19,6 @@ function formatDate(timestamp?: Timestamp) {
     year: "numeric",
   });
 }
-
-const leaderboardPreview = [
-  { username: "rhea", score: 980 },
-  { username: "kai", score: 920 },
-  { username: "mina", score: 875 },
-];
 
 export default function Home() {
   const { profile, loading: authLoading } = useAuth();
@@ -90,7 +85,7 @@ export default function Home() {
         responseText,
       });
       setResponseText("");
-      setSubmissionMessage("Response submitted for later analysis.");
+      setSubmissionMessage("Response submitted and scored.");
     } catch (error) {
       setSubmissionMessage(
         error instanceof Error ? error.message : "Could not submit response.",
@@ -239,22 +234,7 @@ export default function Home() {
             )}
           </section>
 
-          <aside className="rounded-lg border border-zinc-800 bg-zinc-900 p-5">
-            <h2 className="text-xl font-semibold">Leaderboard Preview</h2>
-            <ol className="mt-4 flex flex-col gap-3">
-              {leaderboardPreview.map((player, index) => (
-                <li
-                  className="flex items-center justify-between rounded-md bg-zinc-950 px-3 py-2 text-sm"
-                  key={player.username}
-                >
-                  <span className="text-zinc-300">
-                    {index + 1}. {player.username}
-                  </span>
-                  <span className="font-semibold">{player.score}</span>
-                </li>
-              ))}
-            </ol>
-          </aside>
+          <LeaderboardPreview />
         </div>
       </section>
     </main>

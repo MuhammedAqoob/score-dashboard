@@ -1,4 +1,5 @@
 import { Timestamp } from "firebase/firestore";
+import { ScoreMap } from "@/types/score";
 
 export type Submission = {
   username: string;
@@ -8,6 +9,8 @@ export type Submission = {
   submittedAt?: Timestamp;
   analyzed: boolean;
   score: number;
+  scores: ScoreMap;
+  overallScore: number;
 };
 
 export type CreateSubmissionInput = {
