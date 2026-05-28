@@ -1,4 +1,10 @@
-import { collection, getDocs, onSnapshot, query } from "firebase/firestore";
+import {
+  Timestamp,
+  collection,
+  getDocs,
+  onSnapshot,
+  query,
+} from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { LeaderboardEntry } from "@/types/score";
 
@@ -7,7 +13,21 @@ const SUBMISSIONS_COLLECTION = "submissions";
 type ScoreAccumulator = {
   total: number;
   count: number;
+  topScore: number;
+  dateAchieved?: Timestamp;
 };
+
+function isNewerTimestamp(first?: Timestamp, second?: Timestamp) {
+  if (!first) {
+    return false;
+  }
+
+  if (!second) {
+    return true;
+  }
+
+  return first.toMillis() > second.toMillis();
+}
 
 function buildLeaderboard(
   submissions: Array<Record<string, unknown>>,
@@ -24,11 +44,29 @@ function buildLeaderboard(
       return;
     }
 
-    const current = scoresByUser.get(username) ?? { total: 0, count: 0 };
+    const submittedAt = submission.submittedAt as Timestamp | undefined;
+    const current = scoresByUser.get(username) ?? {
+      total: 0,
+      count: 0,
+      topScore: 0,
+      dateAchieved: undefined,
+    };
+    const isHigherScore = calculatedScore > current.topScore;
+    const isSameScoreButNewer =
+      calculatedScore === current.topScore &&
+      isNewerTimestamp(submittedAt, current.dateAchieved);
 
     scoresByUser.set(username, {
       total: current.total + calculatedScore,
       count: current.count + 1,
+      topScore:
+        isHigherScore || isSameScoreButNewer
+          ? calculatedScore
+          : current.topScore,
+      dateAchieved:
+        isHigherScore || isSameScoreButNewer
+          ? submittedAt
+          : current.dateAchieved,
     });
   });
 
@@ -37,6 +75,8 @@ function buildLeaderboard(
       username,
       averageScore: Math.round(scoreData.total / scoreData.count),
       submissionCount: scoreData.count,
+      topScore: scoreData.topScore,
+      dateAchieved: scoreData.dateAchieved,
     }))
     .sort((first, second) => second.averageScore - first.averageScore)
     .slice(0, limitCount);

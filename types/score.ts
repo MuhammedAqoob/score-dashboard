@@ -1,3 +1,5 @@
+import { Timestamp } from "firebase/firestore";
+
 export type ScoreKey =
   | "problemSolving"
   | "brainstorming"
@@ -28,4 +30,6 @@ export type LeaderboardEntry = {
   username: string;
   averageScore: number;
   submissionCount: number;
+  topScore: number;
+  dateAchieved?: Timestamp;
 };

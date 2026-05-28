@@ -6,6 +6,8 @@ import { fetchAdminStats } from "@/services/adminStatsService";
 type AdminStats = {
   totalUsers: number;
   totalSubmissions: number;
+  pendingQueueSize: number;
+  globalSubmissionsToday: number;
 };
 
 export function useAdminStats() {
