@@ -8,6 +8,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { analyzeResponse } from "@/services/analysisService";
+import { getCurrentDayKey } from "@/services/dayKey";
 import { fetchActivePrompt } from "@/services/promptService";
 import { CreateSubmissionInput } from "@/types/submission";
 
@@ -17,8 +18,19 @@ function getSubmissionsCollectionRef() {
   return collection(db, SUBMISSIONS_COLLECTION);
 }
 
-function getSubmissionId(username: string, promptVersion: number) {
-  return `${encodeURIComponent(username)}_${promptVersion}`;
+function getSubmissionId(username: string, dayKey: string) {
+  return `${encodeURIComponent(username)}_${dayKey}`;
+}
+
+export async function getSubmissionForDay(username: string, dayKey: string) {
+  const submissionRef = doc(
+    db,
+    SUBMISSIONS_COLLECTION,
+    getSubmissionId(username, dayKey),
+  );
+  const submissionSnap = await getDoc(submissionRef);
+
+  return submissionSnap.exists() ? submissionSnap.data() : null;
 }
 
 export async function createSubmission(input: CreateSubmissionInput) {
@@ -29,6 +41,7 @@ export async function createSubmission(input: CreateSubmissionInput) {
   }
 
   const activePrompt = await fetchActivePrompt();
+  const dayKey = getCurrentDayKey();
 
   if (!activePrompt) {
     throw new Error("No active prompt is available.");
@@ -44,12 +57,12 @@ export async function createSubmission(input: CreateSubmissionInput) {
   const submissionRef = doc(
     db,
     SUBMISSIONS_COLLECTION,
-    getSubmissionId(input.username, activePrompt.version),
+    getSubmissionId(input.username, dayKey),
   );
   const existingSubmission = await getDoc(submissionRef);
 
   if (existingSubmission.exists()) {
-    throw new Error("You already submitted for this prompt version.");
+    throw new Error("You already submitted today. Come back tomorrow.");
   }
 
   const analysis = analyzeResponse(responseText);
@@ -58,6 +71,7 @@ export async function createSubmission(input: CreateSubmissionInput) {
     username: input.username,
     promptId: activePrompt.id,
     promptVersion: activePrompt.version,
+    dayKey,
     responseText,
     scores: analysis.scores,
     aiReportedScore: analysis.aiReportedScore,
@@ -66,7 +80,11 @@ export async function createSubmission(input: CreateSubmissionInput) {
     submittedAt: serverTimestamp(),
   });
 
-  return submissionRef.id;
+  return {
+    id: submissionRef.id,
+    calculatedScore: analysis.calculatedScore,
+    aiReportedScore: analysis.aiReportedScore,
+  };
 }
 
 export async function getSubmissionCount() {

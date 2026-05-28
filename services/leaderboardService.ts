@@ -55,6 +55,35 @@ export async function fetchLeaderboard(limitCount = 10) {
   );
 }
 
+export async function fetchUserAverageScore(username: string) {
+  const submissionsSnapshot = await getDocs(
+    query(collection(db, SUBMISSIONS_COLLECTION)),
+  );
+  const userSubmissions = submissionsSnapshot.docs
+    .map((submissionDocument) => submissionDocument.data())
+    .filter(
+      (submission) =>
+        submission.username === username && Boolean(submission.validated),
+    );
+
+  if (userSubmissions.length === 0) {
+    return {
+      averageScore: 0,
+      submissionCount: 0,
+    };
+  }
+
+  const totalScore = userSubmissions.reduce(
+    (total, submission) => total + Number(submission.calculatedScore ?? 0),
+    0,
+  );
+
+  return {
+    averageScore: Math.round(totalScore / userSubmissions.length),
+    submissionCount: userSubmissions.length,
+  };
+}
+
 export function subscribeToLeaderboard(
   limitCount: number,
   onUpdate: (entries: LeaderboardEntry[]) => void,

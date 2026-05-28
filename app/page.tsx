@@ -6,6 +6,7 @@ import { Timestamp } from "firebase/firestore";
 import { LeaderboardPreview } from "@/components/LeaderboardPreview";
 import { useActivePrompt } from "@/hooks/useActivePrompt";
 import { useAuth } from "@/hooks/useAuth";
+import { useDailySubmission } from "@/hooks/useDailySubmission";
 import { createSubmission } from "@/services/submissionService";
 
 function formatDate(timestamp?: Timestamp) {
@@ -24,6 +25,11 @@ export default function Home() {
   const { profile, loading: authLoading, logout } = useAuth();
   const { prompt, loading: promptLoading, error: promptError } = useActivePrompt();
   const canSubmit = Boolean(profile?.approved);
+  const {
+    hasSubmittedToday,
+    loading: dailySubmissionLoading,
+    reload: reloadDailySubmission,
+  } = useDailySubmission(canSubmit ? profile?.username : undefined);
   const [responseText, setResponseText] = useState("");
   const [copyMessage, setCopyMessage] = useState("");
   const [submissionMessage, setSubmissionMessage] = useState("");
@@ -36,7 +42,8 @@ export default function Home() {
 
     try {
       await navigator.clipboard.writeText(prompt.content);
-      setCopyMessage("Prompt copied.");
+      setCopyMessage("Copied!");
+      window.setTimeout(() => setCopyMessage(""), 1800);
     } catch {
       setCopyMessage("Could not copy prompt.");
     }
@@ -79,14 +86,17 @@ export default function Home() {
 
     try {
       setSubmitting(true);
-      await createSubmission({
+      const submission = await createSubmission({
         username: profile.username,
         promptId: prompt.id,
         promptVersion: prompt.version,
         responseText,
       });
       setResponseText("");
-      setSubmissionMessage("Response submitted and scored.");
+      await reloadDailySubmission();
+      setSubmissionMessage(
+        `Response submitted and scored. Your score: ${submission.calculatedScore}/100.`,
+      );
     } catch (error) {
       setSubmissionMessage(
         error instanceof Error ? error.message : "Could not submit response.",
@@ -184,22 +194,26 @@ export default function Home() {
                         </h2>
                       </div>
 
-                      <button
-                        className="rounded-md bg-emerald-500 px-4 py-2 text-sm font-semibold text-zinc-950"
-                        onClick={handleCopyPrompt}
-                        type="button"
-                      >
-                        Copy Prompt
-                      </button>
+                      <div className="flex flex-col items-start gap-2 sm:items-end">
+                        <button
+                          className="cursor-pointer rounded-md bg-emerald-500 px-4 py-2 text-sm font-semibold text-zinc-950 transition-colors hover:bg-emerald-400 active:bg-emerald-600"
+                          onClick={handleCopyPrompt}
+                          type="button"
+                        >
+                          {copyMessage === "Copied!" ? "Copied!" : "Copy Prompt"}
+                        </button>
+                        {copyMessage && (
+                          <p className="rounded-md border border-emerald-900/60 bg-emerald-950/40 px-3 py-1 text-xs font-medium text-emerald-200">
+                            {copyMessage}
+                          </p>
+                        )}
+                      </div>
                     </div>
 
                     <pre className="mt-5 whitespace-pre-wrap rounded-md border border-zinc-800 bg-zinc-950 p-4 text-sm leading-6 text-zinc-100">
                       {prompt.content}
                     </pre>
 
-                    {copyMessage && (
-                      <p className="mt-3 text-sm text-zinc-300">{copyMessage}</p>
-                    )}
                   </>
                 )}
               </article>
@@ -219,8 +233,15 @@ export default function Home() {
                 onSubmit={handleSubmitResponse}
               >
                 <h2 className="text-xl font-semibold">Submit AI Response</h2>
+                {hasSubmittedToday && (
+                  <p className="mt-3 rounded-md border border-amber-900/60 bg-amber-950/30 px-4 py-3 text-sm text-amber-100">
+                    Your result was submitted today. Come back tomorrow after
+                    reset time.
+                  </p>
+                )}
                 <textarea
-                  className="mt-4 min-h-64 w-full resize-y rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm leading-6 text-zinc-50 outline-none focus:border-emerald-400"
+                  className="mt-4 min-h-64 w-full resize-y rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm leading-6 text-zinc-50 outline-none focus:border-emerald-400 disabled:cursor-not-allowed disabled:opacity-50"
+                  disabled={hasSubmittedToday || dailySubmissionLoading}
                   onChange={(event) => setResponseText(event.target.value)}
                   placeholder="Paste the response you got from ChatGPT, Gemini, or another AI tool."
                   value={responseText}
@@ -229,14 +250,17 @@ export default function Home() {
                 <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <input
                     accept=".txt,text/plain"
-                    className="text-sm text-zinc-300 file:mr-4 file:rounded-md file:border-0 file:bg-zinc-100 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-zinc-950"
+                    className="text-sm text-zinc-300 file:mr-4 file:cursor-pointer file:rounded-md file:border-0 file:bg-zinc-100 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-zinc-950 file:hover:bg-zinc-300 disabled:cursor-not-allowed disabled:opacity-50"
+                    disabled={hasSubmittedToday || dailySubmissionLoading}
                     onChange={handleFileUpload}
                     type="file"
                   />
 
                   <button
-                    className="rounded-md bg-emerald-500 px-4 py-2 font-semibold text-zinc-950 disabled:cursor-not-allowed disabled:opacity-60"
-                    disabled={submitting}
+                    className="cursor-pointer rounded-md bg-emerald-500 px-4 py-2 font-semibold text-zinc-950 transition-colors hover:bg-emerald-400 active:bg-emerald-600 disabled:cursor-not-allowed disabled:bg-zinc-700 disabled:text-zinc-400"
+                    disabled={
+                      submitting || hasSubmittedToday || dailySubmissionLoading
+                    }
                     type="submit"
                   >
                     {submitting ? "Submitting..." : "Submit Response"}

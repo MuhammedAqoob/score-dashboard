@@ -55,6 +55,8 @@ export const SCORE_CATEGORIES: ScoreCategory[] = [
       "technical/logical thinking",
       "technical logical thinking",
       "technical / logical thinking",
+      "technical/logical",
+      "technical logical",
       "logical thinking",
       "technical thinking",
     ],
@@ -95,6 +97,7 @@ export const SCORE_CATEGORIES: ScoreCategory[] = [
     aliases: [
       "curiosity & initiative",
       "curiosity and initiative",
+      "curiosity/initiative",
       "curiosity initiative",
       "initiative",
     ],
@@ -213,11 +216,43 @@ function extractMarkdownTableScore(
   return undefined;
 }
 
+function extractInlineCompressedScore(
+  responseText: string,
+  category: ScoreCategory,
+) {
+  const normalizedText = responseText
+    .replace(/\*\*/g, "")
+    .replace(/__/g, "")
+    .replace(/`/g, "")
+    .replace(/[–—]/g, "-");
+
+  for (const alias of category.aliases) {
+    const categoryPattern = escapeRegex(alias).replace(/\s+/g, "\\s*");
+    const scoreRegex = new RegExp(
+      `${categoryPattern}\\s*(?:ability|quality|skill)?\\s*(?:[:\\-=])?\\s*(\\d{1,3})(?:\\s*/\\s*100|\\s*%)?`,
+      "i",
+    );
+    const match = normalizedText.match(scoreRegex);
+
+    if (match?.[1]) {
+      return clampScore(Number(match[1]));
+    }
+  }
+
+  return undefined;
+}
+
 function extractCategoryScore(responseText: string, category: ScoreCategory) {
   const tableScore = extractMarkdownTableScore(responseText, category);
 
   if (tableScore !== undefined) {
     return tableScore;
+  }
+
+  const inlineScore = extractInlineCompressedScore(responseText, category);
+
+  if (inlineScore !== undefined) {
+    return inlineScore;
   }
 
   const lines = responseText.split(/\r?\n/).map(normalizeScoreLine);

@@ -8,6 +8,10 @@ export function LeaderboardPreview() {
   return (
     <aside className="rounded-lg border border-zinc-800 bg-zinc-900 p-5">
       <h2 className="text-xl font-semibold">Leaderboard</h2>
+      <p className="mt-2 text-sm text-zinc-400">
+        Scores are ranked by each user&apos;s average across all validated
+        submissions.
+      </p>
 
       {loading && (
         <p className="mt-4 text-sm text-zinc-400">Loading leaderboard...</p>

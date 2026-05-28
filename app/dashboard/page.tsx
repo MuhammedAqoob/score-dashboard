@@ -5,6 +5,7 @@ import { Timestamp } from "firebase/firestore";
 import Link from "next/link";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserAverageScore } from "@/hooks/useUserAverageScore";
 
 function formatDate(timestamp?: Timestamp) {
   if (!timestamp) {
@@ -20,6 +21,8 @@ function formatDate(timestamp?: Timestamp) {
 
 function DashboardContent() {
   const { firebaseUser, profile, logout, updateProfile } = useAuth();
+  const { averageScore, submissionCount, loading: scoreLoading } =
+    useUserAverageScore(profile?.username);
   const [username, setUsername] = useState(profile?.username ?? "");
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
@@ -67,7 +70,7 @@ function DashboardContent() {
           </div>
 
           <button
-            className="w-full rounded-md bg-zinc-100 px-4 py-2 text-sm font-semibold text-zinc-950 sm:w-auto"
+            className="w-full cursor-pointer rounded-md bg-zinc-100 px-4 py-2 text-sm font-semibold text-zinc-950 transition-colors hover:bg-zinc-300 active:bg-zinc-400 sm:w-auto"
             onClick={logout}
             type="button"
           >
@@ -76,7 +79,7 @@ function DashboardContent() {
         </header>
 
         <Link
-          className="rounded-lg border border-emerald-900/70 bg-emerald-950/30 p-5 transition-colors hover:border-emerald-500"
+          className="rounded-lg border border-emerald-900/70 bg-emerald-950/30 p-5 transition-colors hover:border-emerald-500 hover:bg-emerald-950/50"
           href="/prompts"
         >
           <p className="text-sm font-medium text-emerald-400">Daily Prompt</p>
@@ -93,7 +96,12 @@ function DashboardContent() {
 
           <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-5">
             <p className="text-sm text-zinc-400">Score</p>
-            <p className="mt-2 text-xl font-semibold">{profile?.score ?? 0}</p>
+            <p className="mt-2 text-xl font-semibold">
+              {scoreLoading ? "..." : averageScore}
+            </p>
+            <p className="mt-1 text-xs text-zinc-500">
+              {submissionCount} validated submissions
+            </p>
           </div>
 
           <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-5">
@@ -123,7 +131,7 @@ function DashboardContent() {
               value={username}
             />
             <button
-              className="rounded-md bg-emerald-500 px-4 py-2 font-semibold text-zinc-950 disabled:cursor-not-allowed disabled:opacity-60"
+              className="cursor-pointer rounded-md bg-emerald-500 px-4 py-2 font-semibold text-zinc-950 transition-colors hover:bg-emerald-400 active:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-60"
               disabled={saving}
               type="submit"
             >
@@ -134,15 +142,6 @@ function DashboardContent() {
           {message && <p className="mt-3 text-sm text-zinc-300">{message}</p>}
         </div>
 
-        <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-5">
-          <h2 className="font-semibold">Firebase Auth</h2>
-          <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-[120px_1fr]">
-            <dt className="text-zinc-400">UID</dt>
-            <dd className="break-all">{firebaseUser?.uid}</dd>
-            <dt className="text-zinc-400">Anonymous</dt>
-            <dd>{firebaseUser?.isAnonymous ? "Yes" : "No"}</dd>
-          </dl>
-        </div>
       </section>
     </main>
   );

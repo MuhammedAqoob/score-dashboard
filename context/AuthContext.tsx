@@ -25,6 +25,7 @@ import {
   getSessionUsername,
   setSessionUsername,
 } from "@/services/sessionCookie";
+import { logoutAdmin } from "@/services/adminSession";
 import { UserProfile, UserProfileWithId } from "@/types/user";
 
 type AuthContextValue = {
@@ -110,6 +111,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async (username: string, password: string) => {
       const anonymousUser = firebaseUser ?? (await createAnonymousSession());
       await createUserProfile(username, password, anonymousUser.uid);
+      logoutAdmin();
 
       setFirebaseUser(anonymousUser);
       setProfile(null);
@@ -130,6 +132,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setFirebaseUser(anonymousUser);
       setProfile(loggedInProfile);
       setSessionUsername(loggedInProfile.username);
+      logoutAdmin();
     },
     [firebaseUser],
   );

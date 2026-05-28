@@ -5,6 +5,7 @@ export type Submission = {
   username: string;
   promptId: string;
   promptVersion: number;
+  dayKey: string;
   responseText: string;
   submittedAt?: Timestamp;
   scores: ScoreMap;

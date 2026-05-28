@@ -17,7 +17,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!loading && profile?.approved) {
-      router.replace("/dashboard");
+      router.replace("/");
     }
   }, [loading, profile, router]);
 
@@ -28,6 +28,13 @@ export default function LoginPage() {
       event.preventDefault();
       passwordInputRef.current?.focus();
     }
+  };
+
+  const handleModeChange = (nextMode: "login" | "signup") => {
+    setMode(nextMode);
+    setUsername("");
+    setPassword("");
+    setMessage("");
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -50,7 +57,7 @@ export default function LoginPage() {
         await login(cleanUsername, password);
       }
 
-      router.replace("/dashboard");
+      router.replace("/");
     } catch (submitError) {
       setMessage(
         submitError instanceof Error
@@ -81,24 +88,24 @@ export default function LoginPage() {
 
         <div className="grid grid-cols-2 rounded-lg border border-zinc-800 bg-zinc-900 p-1">
           <button
-            className={`rounded-md px-4 py-2 text-sm font-medium ${
+            className={`cursor-pointer rounded-md px-4 py-2 text-sm font-medium transition-colors ${
               mode === "login"
                 ? "bg-emerald-500 text-zinc-950"
-                : "text-zinc-300"
+                : "text-zinc-300 hover:bg-zinc-800"
             }`}
             type="button"
-            onClick={() => setMode("login")}
+            onClick={() => handleModeChange("login")}
           >
             Login
           </button>
           <button
-            className={`rounded-md px-4 py-2 text-sm font-medium ${
+            className={`cursor-pointer rounded-md px-4 py-2 text-sm font-medium transition-colors ${
               mode === "signup"
                 ? "bg-emerald-500 text-zinc-950"
-                : "text-zinc-300"
+                : "text-zinc-300 hover:bg-zinc-800"
             }`}
             type="button"
-            onClick={() => setMode("signup")}
+            onClick={() => handleModeChange("signup")}
           >
             Signup
           </button>
@@ -130,7 +137,7 @@ export default function LoginPage() {
           </label>
 
           <button
-            className="rounded-md bg-emerald-500 px-4 py-2 font-semibold text-zinc-950 disabled:cursor-not-allowed disabled:opacity-60"
+            className="cursor-pointer rounded-md bg-emerald-500 px-4 py-2 font-semibold text-zinc-950 transition-colors hover:bg-emerald-400 active:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-60"
             disabled={submitting}
             type="submit"
           >

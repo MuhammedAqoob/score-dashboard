@@ -3,9 +3,11 @@
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function AdminLoginPage() {
   const { isAdmin, loading, login } = useAdminAuth();
+  const { logout: logoutUser } = useAuth();
   const router = useRouter();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -17,11 +19,12 @@ export default function AdminLoginPage() {
     }
   }, [isAdmin, loading, router]);
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setMessage("");
 
     try {
+      await logoutUser();
       login(username.trim(), password);
       router.replace("/admin");
     } catch (error) {
