@@ -1,12 +1,15 @@
 type StatusBadgeProps = {
-  status: "approved" | "pending" | "rejected";
+  status: "approved" | "pending" | "revoked" | "banned" | "deleted" | "active";
   label?: string;
 };
 
 const statusClasses = {
   approved: "border-emerald-900/70 bg-emerald-950/40 text-emerald-200",
   pending: "border-amber-900/70 bg-amber-950/40 text-amber-200",
-  rejected: "border-red-900/70 bg-red-950/30 text-red-200",
+  revoked: "border-red-900/60 bg-zinc-950 text-red-200",
+  banned: "border-red-900/70 bg-red-950/30 text-red-200",
+  deleted: "border-zinc-700 bg-zinc-950 text-zinc-400",
+  active: "border-zinc-700 bg-zinc-950 text-zinc-200",
 };
 
 export function StatusBadge({ status, label }: StatusBadgeProps) {

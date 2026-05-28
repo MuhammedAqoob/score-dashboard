@@ -16,7 +16,7 @@ export default function LoginPage() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!loading && profile?.approved) {
+    if (!loading && profile) {
       router.replace("/");
     }
   }, [loading, profile, router]);

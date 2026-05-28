@@ -6,6 +6,11 @@ import {
   query,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import {
+  getEffectiveSubmissionScore,
+  isActiveValidatedSubmission,
+  isApprovedUser,
+} from "@/services/moderationUtils";
 import { LeaderboardEntry } from "@/types/score";
 
 const SUBMISSIONS_COLLECTION = "submissions";
@@ -32,15 +37,19 @@ function isNewerTimestamp(first?: Timestamp, second?: Timestamp) {
 function buildLeaderboard(
   submissions: Array<Record<string, unknown>>,
   limitCount: number,
+  approvedUsernames?: Set<string>,
 ) {
   const scoresByUser = new Map<string, ScoreAccumulator>();
 
   submissions.forEach((submission) => {
     const username = String(submission.username ?? "");
-    const validated = Boolean(submission.validated);
-    const calculatedScore = Number(submission.calculatedScore ?? 0);
+    const calculatedScore = getEffectiveSubmissionScore(submission);
 
-    if (!username || !validated) {
+    if (
+      !username ||
+      !isActiveValidatedSubmission(submission) ||
+      (approvedUsernames && !approvedUsernames.has(username))
+    ) {
       return;
     }
 
@@ -82,16 +91,29 @@ function buildLeaderboard(
     .slice(0, limitCount);
 }
 
-export async function fetchLeaderboard(limitCount = 10) {
-  const leaderboardSnapshot = await getDocs(
-    query(collection(db, SUBMISSIONS_COLLECTION)),
+async function fetchApprovedUsernames() {
+  const usersSnapshot = await getDocs(collection(db, "users"));
+
+  return new Set(
+    usersSnapshot.docs
+      .map((userDocument) => userDocument.data())
+      .filter((user) => isApprovedUser(user))
+      .map((user) => String(user.username ?? "")),
   );
+}
+
+export async function fetchLeaderboard(limitCount = 10) {
+  const [leaderboardSnapshot, approvedUsernames] = await Promise.all([
+    getDocs(query(collection(db, SUBMISSIONS_COLLECTION))),
+    fetchApprovedUsernames(),
+  ]);
 
   return buildLeaderboard(
     leaderboardSnapshot.docs.map((submissionDocument) =>
       submissionDocument.data(),
     ),
     limitCount,
+    approvedUsernames,
   );
 }
 
@@ -103,7 +125,7 @@ export async function fetchUserAverageScore(username: string) {
     .map((submissionDocument) => submissionDocument.data())
     .filter(
       (submission) =>
-        submission.username === username && Boolean(submission.validated),
+        submission.username === username && isActiveValidatedSubmission(submission),
     );
 
   if (userSubmissions.length === 0) {
@@ -114,7 +136,7 @@ export async function fetchUserAverageScore(username: string) {
   }
 
   const totalScore = userSubmissions.reduce(
-    (total, submission) => total + Number(submission.calculatedScore ?? 0),
+    (total, submission) => total + getEffectiveSubmissionScore(submission),
     0,
   );
 
@@ -132,12 +154,19 @@ export function subscribeToLeaderboard(
   return onSnapshot(
     query(collection(db, SUBMISSIONS_COLLECTION)),
     (snapshot) => {
-      onUpdate(
-        buildLeaderboard(
-          snapshot.docs.map((submissionDocument) => submissionDocument.data()),
-          limitCount,
-        ),
-      );
+      fetchApprovedUsernames()
+        .then((approvedUsernames) => {
+          onUpdate(
+            buildLeaderboard(
+              snapshot.docs.map((submissionDocument) =>
+                submissionDocument.data(),
+              ),
+              limitCount,
+              approvedUsernames,
+            ),
+          );
+        })
+        .catch(onError);
     },
     onError,
   );

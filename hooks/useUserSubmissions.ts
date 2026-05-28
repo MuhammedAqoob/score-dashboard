@@ -11,12 +11,15 @@ export function useUserSubmissions(username?: string) {
 
   useEffect(() => {
     if (!username) {
-      setSubmissions([]);
-      setLoading(false);
-      return;
+      const resetTimer = window.setTimeout(() => {
+        setSubmissions([]);
+        setLoading(false);
+      }, 0);
+
+      return () => window.clearTimeout(resetTimer);
     }
 
-    setLoading(true);
+    const loadingTimer = window.setTimeout(() => setLoading(true), 0);
 
     const unsubscribe = subscribeToUserSubmissions(
       username,
@@ -31,7 +34,10 @@ export function useUserSubmissions(username?: string) {
       },
     );
 
-    return unsubscribe;
+    return () => {
+      window.clearTimeout(loadingTimer);
+      unsubscribe();
+    };
   }, [username]);
 
   return {

@@ -2,6 +2,7 @@ import { Timestamp } from "firebase/firestore";
 import { ScoreMap } from "@/types/score";
 
 export type Submission = {
+  id?: string;
   username: string;
   promptId: string;
   promptVersion: number;
@@ -12,6 +13,9 @@ export type Submission = {
   aiReportedScore: number;
   calculatedScore: number;
   validated: boolean;
+  status?: "active" | "deleted";
+  editedByAdmin?: boolean;
+  editedAt?: Timestamp;
 };
 
 export type CreateSubmissionInput = {

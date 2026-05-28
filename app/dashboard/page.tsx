@@ -4,8 +4,10 @@ import { FormEvent, useState } from "react";
 import { Timestamp } from "firebase/firestore";
 import Link from "next/link";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { StatusBadge } from "@/components/StatusBadge";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserAverageScore } from "@/hooks/useUserAverageScore";
+import { getEffectiveUserStatus } from "@/services/moderationUtils";
 
 function formatDate(timestamp?: Timestamp) {
   if (!timestamp) {
@@ -26,6 +28,7 @@ function DashboardContent() {
   const [username, setUsername] = useState(profile?.username ?? "");
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
+  const userStatus = getEffectiveUserStatus(profile);
 
   const handleUsernameSave = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -105,10 +108,18 @@ function DashboardContent() {
           </div>
 
           <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-5">
-            <p className="text-sm text-zinc-400">Approved</p>
-            <p className="mt-2 text-xl font-semibold">
-              {profile?.approved ? "Yes" : "No"}
-            </p>
+            <p className="text-sm text-zinc-400">Status</p>
+            <div className="mt-2">
+              <StatusBadge status={userStatus} />
+            </div>
+            {userStatus === "banned" && (
+              <p className="mt-2 text-xs text-red-200">
+                {profile?.banReason ? `${profile.banReason}. ` : ""}
+                {profile?.bannedUntil
+                  ? `Until ${profile.bannedUntil.toDate().toLocaleString()}`
+                  : "No end date set"}
+              </p>
+            )}
           </div>
 
           <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-5">

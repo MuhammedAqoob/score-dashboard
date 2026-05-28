@@ -6,6 +6,7 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { getEffectiveUserStatus, isBanExpired } from "@/services/moderationUtils";
 import { UserProfile } from "@/types/user";
 
 function normalizeUsername(username: string) {
@@ -28,9 +29,29 @@ export async function getUserProfileByUsername(username: string) {
     return null;
   }
 
+  const profileData = profileSnap.data() as UserProfile;
+
+  if (profileData.status === "banned" && isBanExpired(profileData.bannedUntil)) {
+    await updateDoc(getUserProfileRef(cleanUsername), {
+      approved: true,
+      status: "approved",
+      bannedUntil: null,
+      banReason: null,
+    });
+
+    return {
+      id: cleanUsername,
+      ...profileData,
+      approved: true,
+      status: "approved" as const,
+      bannedUntil: null,
+      banReason: null,
+    };
+  }
+
   return {
     id: cleanUsername,
-    ...(profileSnap.data() as UserProfile),
+    ...profileData,
   };
 }
 
@@ -52,6 +73,9 @@ export async function createUserProfile(
     password,
     score: 0,
     approved: false,
+    status: "pending",
+    bannedUntil: null,
+    banReason: null,
     currentUid,
   };
 
@@ -78,12 +102,11 @@ export async function loginUserProfile(
     throw new Error("Username or password is incorrect.");
   }
 
-  if (!profile.approved) {
-    throw new Error("Your account is waiting for admin approval.");
-  }
-
   await updateDoc(getUserProfileRef(cleanUsername), {
     currentUid,
+    ...(getEffectiveUserStatus(profile) === "approved"
+      ? { approved: true, status: "approved" }
+      : {}),
   });
 
   return {

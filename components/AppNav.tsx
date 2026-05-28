@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useAuth } from "@/hooks/useAuth";
+import { getEffectiveUserStatus } from "@/services/moderationUtils";
 
 export function AppNav() {
   const { profile, loading, logout } = useAuth();
@@ -12,6 +13,7 @@ export function AppNav() {
   const pathname = usePathname();
   const menuRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
+  const userStatus = getEffectiveUserStatus(profile);
 
   const activeLinkClass = (href: string) =>
     pathname === href
@@ -27,7 +29,9 @@ export function AppNav() {
   }, [isAdmin, profile?.username]);
 
   useEffect(() => {
-    setOpen(false);
+    const closeTimer = window.setTimeout(() => setOpen(false), 0);
+
+    return () => window.clearTimeout(closeTimer);
   }, [pathname]);
 
   useEffect(() => {
@@ -100,12 +104,14 @@ export function AppNav() {
                     <p className="text-sm font-semibold text-white">
                       {isAdmin ? "Admin" : profile?.username}
                     </p>
-                    {profile && !profile.approved && (
-                      <p className="mt-1 text-xs text-amber-300">Pending approval</p>
+                    {profile && userStatus !== "approved" && (
+                      <p className="mt-1 text-xs text-amber-300">
+                        {userStatus[0].toUpperCase() + userStatus.slice(1)}
+                      </p>
                     )}
                   </div>
 
-                  {profile?.approved && (
+                  {profile && (
                     <Link
                       className="block px-4 py-3 text-sm text-zinc-200 transition hover:bg-zinc-800"
                       href="/dashboard"

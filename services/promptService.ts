@@ -5,6 +5,7 @@ import {
   setDoc,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { createAdminLog } from "@/services/adminLogService";
 import { CreatePromptInput, Prompt, PromptWithId } from "@/types/prompt";
 
 const PROMPTS_COLLECTION = "prompts";
@@ -51,6 +52,12 @@ export async function saveActivePrompt(input: CreatePromptInput) {
     },
     { merge: true },
   );
+
+  await createAdminLog({
+    actionType: "prompt_update",
+    targetUsername: "global_prompt",
+    details: `Active prompt saved as version ${input.version}.`,
+  });
 }
 
 export const createPrompt = saveActivePrompt;

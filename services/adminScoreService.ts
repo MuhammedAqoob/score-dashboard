@@ -1,6 +1,10 @@
 import { collection, onSnapshot, query } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { getCurrentDayKey } from "@/services/dayKey";
+import {
+  getEffectiveSubmissionScore,
+  isActiveValidatedSubmission,
+} from "@/services/moderationUtils";
 
 export type AdminUserScore = {
   averageScore: number;
@@ -36,13 +40,12 @@ export function subscribeToAdminScores(
       snapshot.docs.forEach((submissionDocument) => {
         const submission = submissionDocument.data();
         const username = String(submission.username ?? "");
-        const validated = Boolean(submission.validated);
-        const calculatedScore = Number(submission.calculatedScore ?? 0);
+        const calculatedScore = getEffectiveSubmissionScore(submission);
         const dayKey = String(submission.dayKey ?? "");
         const responseText = String(submission.responseText ?? "");
         const submittedAt = submission.submittedAt?.toMillis?.() ?? 0;
 
-        if (!username || !validated) {
+        if (!username || !isActiveValidatedSubmission(submission)) {
           return;
         }
 

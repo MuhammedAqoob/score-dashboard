@@ -3,9 +3,14 @@
 import { ChangeEvent, FormEvent, useState } from "react";
 import Link from "next/link";
 import { Timestamp } from "firebase/firestore";
+import { StatusBadge } from "@/components/StatusBadge";
 import { useActivePrompt } from "@/hooks/useActivePrompt";
 import { useAuth } from "@/hooks/useAuth";
 import { useDailySubmission } from "@/hooks/useDailySubmission";
+import {
+  getEffectiveUserStatus,
+  isUserCurrentlyBanned,
+} from "@/services/moderationUtils";
 import { createSubmission } from "@/services/submissionService";
 
 function formatDate(timestamp?: Timestamp) {
@@ -23,7 +28,9 @@ function formatDate(timestamp?: Timestamp) {
 export default function Home() {
   const { profile, loading: authLoading } = useAuth();
   const { prompt, loading: promptLoading, error: promptError } = useActivePrompt();
-  const canSubmit = Boolean(profile?.approved);
+  const userStatus = getEffectiveUserStatus(profile);
+  const canSubmit = userStatus === "approved";
+  const isBanned = isUserCurrentlyBanned(profile);
   const {
     hasSubmittedToday,
     loading: dailySubmissionLoading,
@@ -35,7 +42,10 @@ export default function Home() {
   const [submissionMessage, setSubmissionMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const submissionLocked = hasSubmittedToday || dailySubmissionLoading;
+  const submissionLocked = hasSubmittedToday || dailySubmissionLoading || !canSubmit;
+  const banUntilText = profile?.bannedUntil
+    ? profile.bannedUntil.toDate().toLocaleString()
+    : null;
 
   const showTemporaryMessage = (
     setter: (message: string) => void,
@@ -206,12 +216,22 @@ export default function Home() {
             <div className="flex flex-col gap-2">
               <p className="text-sm text-zinc-400">Score submission</p>
               <h2 className="text-2xl font-bold text-white">Paste AI Output</h2>
+              {profile && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-zinc-400">Account status</span>
+                  <StatusBadge status={userStatus} />
+                </div>
+              )}
               {!canSubmit && (
                 <p className="rounded-md border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm text-zinc-400">
                   {authLoading
                     ? "Checking your account..."
                     : profile
-                      ? "Your account is waiting for admin approval. You can view the leaderboard while you wait."
+                      ? isBanned
+                        ? `Your account is temporarily banned${banUntilText ? ` until ${banUntilText}` : ""}.${profile.banReason ? ` Reason: ${profile.banReason}` : ""}`
+                        : userStatus === "pending"
+                          ? "Your account is pending approval. You can view the leaderboard while you wait."
+                          : "Your account access has been revoked. You can still view the leaderboard."
                       : "Log in with an approved account to submit scores."}
                 </p>
               )}
