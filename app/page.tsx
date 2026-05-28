@@ -4,9 +4,15 @@ import { ChangeEvent, FormEvent, useState } from "react";
 import Link from "next/link";
 import { Timestamp } from "firebase/firestore";
 import { StatusBadge } from "@/components/StatusBadge";
+import {
+  SubmissionAnalyticsPanel,
+  SubmissionAnalyticsResult,
+} from "@/components/analytics/SubmissionAnalyticsPanel";
 import { useActivePrompt } from "@/hooks/useActivePrompt";
 import { useAuth } from "@/hooks/useAuth";
 import { useDailySubmission } from "@/hooks/useDailySubmission";
+import { useUserSubmissions } from "@/hooks/useUserSubmissions";
+import { ScoreValidationError } from "@/services/analysisService";
 import {
   getEffectiveUserStatus,
   isUserCurrentlyBanned,
@@ -36,10 +42,13 @@ export default function Home() {
     loading: dailySubmissionLoading,
     reload: reloadDailySubmission,
   } = useDailySubmission(canSubmit ? profile?.username : undefined);
+  const { submissions: userSubmissions } = useUserSubmissions(profile?.username);
   const [responseText, setResponseText] = useState("");
   const [copyMessage, setCopyMessage] = useState("");
   const [pasteMessage, setPasteMessage] = useState("");
   const [submissionMessage, setSubmissionMessage] = useState("");
+  const [analyticsResult, setAnalyticsResult] =
+    useState<SubmissionAnalyticsResult | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const submissionLocked = hasSubmittedToday || dailySubmissionLoading || !canSubmit;
@@ -126,10 +135,32 @@ export default function Home() {
       });
       setResponseText("");
       await reloadDailySubmission();
+      setAnalyticsResult({
+        id: submission.id,
+        username: profile.username,
+        dayKey: submission.dayKey,
+        scores: submission.scores,
+        aiReportedScore: submission.aiReportedScore,
+        calculatedScore: submission.calculatedScore,
+        validated: submission.validated,
+        message:
+          "The AI-reported score matches the site calculation within the allowed rounding tolerance.",
+      });
       setSubmissionMessage(
         `Response submitted and scored. Your score: ${submission.calculatedScore}/100.`,
       );
     } catch (error) {
+      if (error instanceof ScoreValidationError) {
+        setAnalyticsResult({
+          username: profile.username,
+          scores: error.scores,
+          aiReportedScore: error.aiReportedScore,
+          calculatedScore: error.calculatedScore,
+          validated: false,
+          message: error.message,
+        });
+      }
+
       setSubmissionMessage(
         error instanceof Error ? error.message : "Could not submit response.",
       );
@@ -305,15 +336,53 @@ export default function Home() {
           </form>
         </div>
 
-        <section className="grid gap-3 rounded-lg border border-zinc-800 bg-zinc-900 p-4 text-sm text-zinc-300 sm:grid-cols-3">
-          {["Copy", "Run in AI", "Paste & Submit"].map((step, index) => (
-            <div className="flex items-center gap-3" key={step}>
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-zinc-700 bg-zinc-950 font-bold text-white">
-                {index + 1}
-              </span>
-              <span>{step}</span>
-            </div>
-          ))}
+        {analyticsResult && (
+          <SubmissionAnalyticsPanel
+            historicalSubmissions={userSubmissions}
+            result={analyticsResult}
+          />
+        )}
+
+        <section className="rounded-lg border border-zinc-800 bg-zinc-900 p-5">
+          <div className="max-w-2xl">
+            <p className="text-sm font-medium text-emerald-400">Quick Steps</p>
+            <h2 className="mt-1 text-2xl font-bold text-white">
+              How It Works
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-zinc-400">
+              Use the official prompt, bring back the AI output, and the site
+              validates the score before it enters analytics.
+            </p>
+          </div>
+          <div className="mt-5 grid gap-3 md:grid-cols-3">
+            {[
+              {
+                title: "Copy the prompt",
+                body: "Start from the official prompt so every submission uses the same scoring frame.",
+              },
+              {
+                title: "Run it in AI",
+                body: "Paste the prompt into your preferred AI tool and let it produce the scored response.",
+              },
+              {
+                title: "Paste and analyze",
+                body: "Submit the output here to validate, score, and visualize your performance history.",
+              },
+            ].map((step, index) => (
+              <div
+                className="rounded-lg border border-zinc-800 bg-zinc-950 p-4"
+                key={step.title}
+              >
+                <span className="flex h-8 w-8 items-center justify-center rounded-full border border-zinc-700 bg-zinc-900 text-sm font-bold text-white">
+                  {index + 1}
+                </span>
+                <h3 className="mt-4 font-semibold text-white">{step.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-zinc-400">
+                  {step.body}
+                </p>
+              </div>
+            ))}
+          </div>
         </section>
       </section>
     </main>

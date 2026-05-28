@@ -1,5 +1,42 @@
 import { ScoreCategory, ScoreKey, ScoreMap } from "@/types/score";
 
+export class ScoreValidationError extends Error {
+  scores: ScoreMap;
+  aiReportedScore: number | null;
+  calculatedScore: number;
+
+  constructor(
+    message: string,
+    scores: ScoreMap,
+    aiReportedScore: number | null,
+    calculatedScore: number,
+  ) {
+    super(message);
+    this.name = "ScoreValidationError";
+    this.scores = scores;
+    this.aiReportedScore = aiReportedScore;
+    this.calculatedScore = calculatedScore;
+  }
+}
+
+export const SCORE_WEIGHTS: Record<ScoreKey, number> = {
+  problemSolving: 15,
+  analyticalThinking: 12,
+  learningSpeed: 10,
+  researchSkill: 10,
+  brainstorming: 10,
+  technicalThinking: 10,
+  communicationClarity: 8,
+  adaptability: 7,
+  selfCorrection: 7,
+  planningExecution: 6,
+  curiosityInitiative: 5,
+  persistence: 5,
+  decisionMaking: 5,
+  creativity: 3,
+  promptQuality: 2,
+};
+
 export const SCORE_CATEGORIES: ScoreCategory[] = [
   {
     key: "problemSolving",
@@ -10,25 +47,25 @@ export const SCORE_CATEGORIES: ScoreCategory[] = [
       "problem-solving ability",
       "problem solving ability",
     ],
-    weight: 0.15,
+    weight: SCORE_WEIGHTS.problemSolving,
   },
   {
     key: "analyticalThinking",
     label: "Analytical thinking",
     aliases: ["analytical thinking", "analysis", "analytical-thinking"],
-    weight: 0.12,
+    weight: SCORE_WEIGHTS.analyticalThinking,
   },
   {
     key: "learningSpeed",
     label: "Learning speed",
     aliases: ["learning speed", "learning-speed", "learning agility"],
-    weight: 0.1,
+    weight: SCORE_WEIGHTS.learningSpeed,
   },
   {
     key: "researchSkill",
     label: "Research skill",
     aliases: ["research skill", "research skills", "research"],
-    weight: 0.1,
+    weight: SCORE_WEIGHTS.researchSkill,
   },
   {
     key: "brainstorming",
@@ -39,7 +76,7 @@ export const SCORE_CATEGORIES: ScoreCategory[] = [
       "brainstorming / idea generation",
       "brainstorming idea generation",
     ],
-    weight: 0.1,
+    weight: SCORE_WEIGHTS.brainstorming,
   },
   {
     key: "technicalThinking",
@@ -53,7 +90,7 @@ export const SCORE_CATEGORIES: ScoreCategory[] = [
       "logical thinking",
       "technical thinking",
     ],
-    weight: 0.1,
+    weight: SCORE_WEIGHTS.technicalThinking,
   },
   {
     key: "communicationClarity",
@@ -64,13 +101,24 @@ export const SCORE_CATEGORIES: ScoreCategory[] = [
       "clarity",
       "communication-clarity",
     ],
-    weight: 0.08,
+    weight: SCORE_WEIGHTS.communicationClarity,
+  },
+  {
+    key: "decisionMaking",
+    label: "Decision making",
+    aliases: [
+      "decision making",
+      "decision-making",
+      "decision_making",
+      "judgment",
+    ],
+    weight: SCORE_WEIGHTS.decisionMaking,
   },
   {
     key: "adaptability",
     label: "Adaptability",
     aliases: ["adaptability", "adaptable thinking"],
-    weight: 0.07,
+    weight: SCORE_WEIGHTS.adaptability,
   },
   {
     key: "selfCorrection",
@@ -82,7 +130,7 @@ export const SCORE_CATEGORIES: ScoreCategory[] = [
       "self correction improvement",
       "self improvement",
     ],
-    weight: 0.07,
+    weight: SCORE_WEIGHTS.selfCorrection,
   },
   {
     key: "planningExecution",
@@ -95,7 +143,7 @@ export const SCORE_CATEGORIES: ScoreCategory[] = [
       "planning",
       "execution",
     ],
-    weight: 0.06,
+    weight: SCORE_WEIGHTS.planningExecution,
   },
   {
     key: "curiosityInitiative",
@@ -107,7 +155,7 @@ export const SCORE_CATEGORIES: ScoreCategory[] = [
       "curiosity initiative",
       "initiative",
     ],
-    weight: 0.05,
+    weight: SCORE_WEIGHTS.curiosityInitiative,
   },
   {
     key: "persistence",
@@ -119,13 +167,13 @@ export const SCORE_CATEGORIES: ScoreCategory[] = [
       "persistence consistency",
       "perseverance",
     ],
-    weight: 0.05,
+    weight: SCORE_WEIGHTS.persistence,
   },
   {
     key: "creativity",
     label: "Creativity",
     aliases: ["creativity", "creative thinking"],
-    weight: 0.03,
+    weight: SCORE_WEIGHTS.creativity,
   },
   {
     key: "promptQuality",
@@ -139,16 +187,24 @@ export const SCORE_CATEGORIES: ScoreCategory[] = [
       "prompt quality / ability to ask useful questions",
       "prompt quality asking useful questions",
     ],
-    weight: 0.02,
+    weight: SCORE_WEIGHTS.promptQuality,
   },
 ];
 
-function escapeRegex(value: string) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
 function clampScore(score: number) {
   return Math.max(0, Math.min(100, score));
+}
+
+function logAnalysisDebug(...values: unknown[]) {
+  if (process.env.NODE_ENV === "development") {
+    console.log(...values);
+  }
+}
+
+function tableAnalysisDebug(value: unknown) {
+  if (process.env.NODE_ENV === "development") {
+    console.table(value);
+  }
 }
 
 function normalizeScoreLine(line: string) {
@@ -156,134 +212,77 @@ function normalizeScoreLine(line: string) {
     .replace(/\*\*/g, "")
     .replace(/__/g, "")
     .replace(/`/g, "")
-    .replace(/[–—]/g, "-")
-    .replace(/^\s*(?:[-*•]|\d+[.)])\s*/, "")
+    .replace(/[\u2013\u2014]/g, "-")
+    .replace(/^\s*(?:[-*]|\d+[.)])\s*/, "")
     .trim();
 }
 
-function normalizeForCompare(value: string) {
+function normalizeScorecardKey(value: string) {
   return normalizeScoreLine(value)
     .toLowerCase()
-    .replace(/[\/&]/g, " ")
+    .replace(/[\/&-]/g, " ")
+    .replace(/_/g, " ")
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
     .replace(/[^a-z0-9]+/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 }
 
-function extractMarkdownTableScore(
-  responseText: string,
-  category: ScoreCategory,
-) {
-  const aliases = category.aliases.map(normalizeForCompare);
-  const lines = responseText.split(/\r?\n/);
+export function extractScorecardBlock(responseText: string) {
+  const match = responseText.match(
+    /BEGIN_SCORECARD\s*([\s\S]*?)\s*END_SCORECARD/i,
+  );
+
+  return match?.[1]?.trim() ?? null;
+}
+
+function getScorecardAliases(category: ScoreCategory) {
+  const snakeKey = category.key.replace(/([A-Z])/g, "_$1");
+
+  return [
+    category.key,
+    category.key.replace(/([A-Z])/g, " $1"),
+    snakeKey,
+    category.label,
+    ...category.aliases,
+  ].map(normalizeScorecardKey);
+}
+
+function extractScorecardValue(scorecardBlock: string, acceptedKeys: string[]) {
+  const lines = scorecardBlock.split(/\r?\n/).map(normalizeScoreLine);
 
   for (const line of lines) {
-    if (!line.includes("|")) {
-      continue;
-    }
-
-    const cells = line
-      .split("|")
-      .map((cell) => normalizeScoreLine(cell))
-      .filter(Boolean);
-
-    if (cells.length < 2 || cells.every((cell) => /^-+$/.test(cell))) {
-      continue;
-    }
-
-    const categoryCell = normalizeForCompare(cells[0]);
-    const matchesCategory = aliases.some(
-      (alias) => categoryCell.includes(alias) || alias.includes(categoryCell),
+    const match = line.match(
+      /^\s*([A-Za-z0-9_/&_\-\s]+?)\s*(?::|=|-)\s*(\d{1,3})(?:\s*\/\s*100|\s*%)?\s*$/i,
     );
 
-    if (!matchesCategory) {
+    if (!match?.[1] || !match[2]) {
       continue;
     }
 
-    const scoreCell = cells.find((cell, index) => {
-      if (index === 0) {
-        return false;
-      }
+    const key = normalizeScorecardKey(match[1]);
 
-      return /\b\d{1,3}\b/.test(cell);
-    });
-    const scoreMatch = scoreCell?.match(/\b(\d{1,3})\b/);
-
-    if (scoreMatch?.[1]) {
-      return clampScore(Number(scoreMatch[1]));
+    if (acceptedKeys.includes(key)) {
+      return clampScore(Number(match[2]));
     }
   }
 
   return undefined;
 }
 
-function extractInlineCompressedScore(
-  responseText: string,
-  category: ScoreCategory,
-) {
-  const normalizedText = responseText
-    .replace(/\*\*/g, "")
-    .replace(/__/g, "")
-    .replace(/`/g, "")
-    .replace(/[–—]/g, "-");
-
-  for (const alias of category.aliases) {
-    const categoryPattern = escapeRegex(alias).replace(/\s+/g, "\\s*");
-    const scoreRegex = new RegExp(
-      `${categoryPattern}\\s*(?:ability|quality|skill)?\\s*(?:[:\\-=])?\\s*(\\d{1,3})(?:\\s*/\\s*100|\\s*%)?`,
-      "i",
-    );
-    const match = normalizedText.match(scoreRegex);
-
-    if (match?.[1]) {
-      return clampScore(Number(match[1]));
-    }
-  }
-
-  return undefined;
-}
-
-function extractLineScore(responseText: string, category: ScoreCategory) {
-  const lines = responseText.split(/\r?\n/).map(normalizeScoreLine);
-
-  for (const alias of category.aliases) {
-    const categoryPattern = escapeRegex(alias).replace(/\s+/g, "\\s+");
-    const scoreRegexes = [
-      new RegExp(
-        `^${categoryPattern}[^\\d\\n\\r]*(?:[:\\-=]|score\\s*[:\\-=]?)\\s*(\\d{1,3})(?:\\s*/\\s*100|\\s*%?)?`,
-        "i",
-      ),
-      new RegExp(
-        `^${categoryPattern}.*?\\b(?:score\\s*)?(\\d{1,3})(?:\\s*/\\s*100|\\s*%?)?\\b`,
-        "i",
-      ),
-    ];
-
-    for (const line of lines) {
-      const match = scoreRegexes
-        .map((scoreRegex) => line.match(scoreRegex))
-        .find(Boolean);
-
-      if (match?.[1]) {
-        return clampScore(Number(match[1]));
-      }
-    }
-  }
-
-  return undefined;
-}
-
-function extractCategoryScore(responseText: string, category: ScoreCategory) {
-  return (
-    extractMarkdownTableScore(responseText, category) ??
-    extractInlineCompressedScore(responseText, category) ??
-    extractLineScore(responseText, category)
-  );
+function extractCategoryScore(scorecardBlock: string, category: ScoreCategory) {
+  return extractScorecardValue(scorecardBlock, getScorecardAliases(category));
 }
 
 export function extractScores(responseText: string) {
+  const scorecardBlock = extractScorecardBlock(responseText);
+
+  if (!scorecardBlock) {
+    return null;
+  }
+
   return SCORE_CATEGORIES.reduce<ScoreMap>((scores, category) => {
-    const score = extractCategoryScore(responseText, category);
+    const score = extractCategoryScore(scorecardBlock, category);
 
     if (score !== undefined) {
       scores[category.key] = score;
@@ -294,23 +293,18 @@ export function extractScores(responseText: string) {
 }
 
 export function extractAiReportedScore(responseText: string) {
-  const normalizedText = responseText
-    .split(/\r?\n/)
-    .map(normalizeScoreLine)
-    .join("\n");
-  const scoreRegexes = [
-    /(?:final\s+)?(?:weighted\s+)?overall\s+score\s*[:\-=]\s*(\d{1,3})(?:\s*\/\s*100|\s*%?)?/i,
-    /final\s+(?:weighted\s+)?score\s*[:\-=]\s*(\d{1,3})(?:\s*\/\s*100|\s*%?)?/i,
-  ];
-  const match = scoreRegexes
-    .map((scoreRegex) => normalizedText.match(scoreRegex))
-    .find(Boolean);
+  const scorecardBlock = extractScorecardBlock(responseText);
 
-  if (!match?.[1]) {
+  if (!scorecardBlock) {
     return null;
   }
 
-  return clampScore(Number(match[1]));
+  return (
+    extractScorecardValue(scorecardBlock, [
+      "final weighted score",
+      "final weightedscore",
+    ]) ?? null
+  );
 }
 
 export function getWeightedScoreBreakdown(scores: ScoreMap) {
@@ -333,37 +327,92 @@ export function getWeightedScoreBreakdown(scores: ScoreMap) {
   });
 }
 
-export function calculateOverallScore(scores: ScoreMap) {
+export function getTotalScoreWeight() {
+  return Object.values(SCORE_WEIGHTS).reduce((total, weight) => total + weight, 0);
+}
+
+export function calculateWeightedScoreStats(scores: ScoreMap) {
   const weightedTotal = getWeightedScoreBreakdown(scores).reduce(
     (total, item) => total + item.weightedValue,
     0,
   );
+  const totalWeight = getTotalScoreWeight();
+  const normalizedScore = totalWeight > 0 ? weightedTotal / totalWeight : 0;
 
-  return Math.round(weightedTotal);
+  return {
+    totalWeight,
+    weightedTotal,
+    normalizedScore,
+  };
+}
+
+export function calculateOverallScore(scores: ScoreMap) {
+  const { normalizedScore } = calculateWeightedScoreStats(scores);
+
+  return Math.round(normalizedScore);
+}
+
+function getMissingScoreLabels(scores: ScoreMap) {
+  return SCORE_CATEGORIES.filter(
+    (category) => scores[category.key] === undefined,
+  ).map((category) => category.label);
 }
 
 export function analyzeResponse(responseText: string) {
-  const scores = extractScores(responseText);
+  const scorecardBlock = extractScorecardBlock(responseText);
+
+  if (!scorecardBlock) {
+    throw new ScoreValidationError(
+      "Scorecard block missing. Please include BEGIN_SCORECARD and END_SCORECARD in the AI output.",
+      {},
+      null,
+      0,
+    );
+  }
+
+  const scores = extractScores(responseText) ?? {};
   const aiReportedScore = extractAiReportedScore(responseText);
   const weightedBreakdown = getWeightedScoreBreakdown(scores);
-  const calculatedScore = calculateOverallScore(scores);
+  const weightedScoreStats = calculateWeightedScoreStats(scores);
+  const calculatedScore = Math.round(weightedScoreStats.normalizedScore);
+  const missingScoreLabels = getMissingScoreLabels(scores);
 
-  console.log("[analysis] parsed categories", scores);
-  console.table(weightedBreakdown);
-  console.log("[analysis] calculated score", calculatedScore);
-  console.log("[analysis] AI reported score", aiReportedScore);
+  logAnalysisDebug("[analysis] scorecard block", scorecardBlock);
+  logAnalysisDebug("[analysis] parsed categories", scores);
+  tableAnalysisDebug(weightedBreakdown);
+  logAnalysisDebug("[analysis] totalWeight", weightedScoreStats.totalWeight);
+  logAnalysisDebug("[analysis] weightedTotal", weightedScoreStats.weightedTotal);
+  logAnalysisDebug(
+    "[analysis] normalizedScore",
+    weightedScoreStats.normalizedScore,
+  );
+  logAnalysisDebug("[analysis] calculated score", calculatedScore);
+  logAnalysisDebug("[analysis] AI reported score", aiReportedScore);
 
-  if (Object.keys(scores).length === 0) {
-    throw new Error("No category scores were found in the AI response.");
+  if (missingScoreLabels.length > 0) {
+    throw new ScoreValidationError(
+      `Scorecard is missing category scores: ${missingScoreLabels.join(", ")}.`,
+      scores,
+      aiReportedScore,
+      calculatedScore,
+    );
   }
 
   if (aiReportedScore === null) {
-    throw new Error("Final Overall Score was not found in the AI response.");
+    throw new ScoreValidationError(
+      "FINAL_WEIGHTED_SCORE was not found in the scorecard block.",
+      scores,
+      aiReportedScore,
+      calculatedScore,
+    );
   }
 
   if (Math.abs(aiReportedScore - calculatedScore) > 1) {
-    throw new Error(
-      `Score validation failed. AI reported ${aiReportedScore}, but the calculated score is ${calculatedScore}.`,
+    throw new ScoreValidationError(
+      "Score mismatch detected. The AI-generated weighted score does not match calculated values. Please regenerate the analysis without editing the output.",
+      scores,
+      aiReportedScore,
+      calculatedScore,
     );
   }
 

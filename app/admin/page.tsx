@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { AdminProtectedRoute } from "@/components/AdminProtectedRoute";
 import { MetricCard } from "@/components/MetricCard";
 import { StatusBadge } from "@/components/StatusBadge";
+import { AdminAnalyticsOverview } from "@/components/analytics/AdminAnalyticsOverview";
 import { useActivePrompt } from "@/hooks/useActivePrompt";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useAdminLogs } from "@/hooks/useAdminLogs";
@@ -280,6 +281,8 @@ function AdminDashboardContent() {
           <MetricCard label="Average Platform Score" value={statsLoading ? "..." : `${stats?.averagePlatformScore ?? 0}/100`} />
           <MetricCard label="Today's Average Score" value={statsLoading ? "..." : `${stats?.todaysAverageScore ?? 0}/100`} />
         </div>
+
+        <AdminAnalyticsOverview submissions={submissions} />
 
         <SectionShell title="User Moderation">
           <label className="mt-4 block max-w-sm text-sm text-zinc-300">

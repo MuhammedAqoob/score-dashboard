@@ -17,7 +17,10 @@ export function subscribeToUserSubmissions(
     query(collection(db, SUBMISSIONS_COLLECTION)),
     (snapshot) => {
       const submissions = snapshot.docs
-        .map((submissionDocument) => submissionDocument.data() as Submission)
+        .map((submissionDocument) => ({
+          id: submissionDocument.id,
+          ...(submissionDocument.data() as Submission),
+        }))
         .filter((submission) => submission.username === username)
         .sort(
           (first, second) =>

@@ -112,6 +112,10 @@ export async function createSubmission(input: CreateSubmissionInput) {
     id: submissionRef.id,
     calculatedScore: analysis.calculatedScore,
     aiReportedScore: analysis.aiReportedScore,
+    scores: analysis.scores,
+    validated: analysis.validated,
+    submittedAt: new Date(),
+    dayKey,
   };
 }
 
