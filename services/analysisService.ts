@@ -7,10 +7,27 @@ export const SCORE_CATEGORIES: ScoreCategory[] = [
     aliases: [
       "problem-solving",
       "problem solving",
-      "problemsolving",
       "problem-solving ability",
       "problem solving ability",
     ],
+    weight: 0.15,
+  },
+  {
+    key: "analyticalThinking",
+    label: "Analytical thinking",
+    aliases: ["analytical thinking", "analysis", "analytical-thinking"],
+    weight: 0.12,
+  },
+  {
+    key: "learningSpeed",
+    label: "Learning speed",
+    aliases: ["learning speed", "learning-speed", "learning agility"],
+    weight: 0.1,
+  },
+  {
+    key: "researchSkill",
+    label: "Research skill",
+    aliases: ["research skill", "research skills", "research"],
     weight: 0.1,
   },
   {
@@ -22,34 +39,10 @@ export const SCORE_CATEGORIES: ScoreCategory[] = [
       "brainstorming / idea generation",
       "brainstorming idea generation",
     ],
-    weight: 0.07,
-  },
-  {
-    key: "researchSkill",
-    label: "Research skill",
-    aliases: ["research skill", "research skills", "research"],
-    weight: 0.08,
-  },
-  {
-    key: "learningSpeed",
-    label: "Learning speed",
-    aliases: ["learning speed", "learning-speed", "learning agility"],
-    weight: 0.08,
-  },
-  {
-    key: "analyticalThinking",
-    label: "Analytical thinking",
-    aliases: ["analytical thinking", "analysis", "analytical-thinking"],
     weight: 0.1,
   },
   {
-    key: "creativity",
-    label: "Creativity",
-    aliases: ["creativity", "creative thinking"],
-    weight: 0.08,
-  },
-  {
-    key: "technicalLogicalThinking",
+    key: "technicalThinking",
     label: "Technical/logical thinking",
     aliases: [
       "technical/logical thinking",
@@ -60,7 +53,7 @@ export const SCORE_CATEGORIES: ScoreCategory[] = [
       "logical thinking",
       "technical thinking",
     ],
-    weight: 0.09,
+    weight: 0.1,
   },
   {
     key: "communicationClarity",
@@ -74,40 +67,22 @@ export const SCORE_CATEGORIES: ScoreCategory[] = [
     weight: 0.08,
   },
   {
-    key: "decisionMaking",
-    label: "Decision-making",
-    aliases: [
-      "decision-making",
-      "decision making",
-      "decision-making quality",
-      "decision making quality",
-      "judgment",
-    ],
-    weight: 0.07,
-  },
-  {
     key: "adaptability",
     label: "Adaptability",
     aliases: ["adaptability", "adaptable thinking"],
-    weight: 0.06,
-  },
-  {
-    key: "curiosityInitiative",
-    label: "Curiosity & initiative",
-    aliases: [
-      "curiosity & initiative",
-      "curiosity and initiative",
-      "curiosity/initiative",
-      "curiosity initiative",
-      "initiative",
-    ],
-    weight: 0.05,
+    weight: 0.07,
   },
   {
     key: "selfCorrection",
     label: "Self-correction",
-    aliases: ["self-correction", "self correction", "self critique"],
-    weight: 0.06,
+    aliases: [
+      "self-correction",
+      "self correction",
+      "self-correction / improvement",
+      "self correction improvement",
+      "self improvement",
+    ],
+    weight: 0.07,
   },
   {
     key: "planningExecution",
@@ -123,10 +98,34 @@ export const SCORE_CATEGORIES: ScoreCategory[] = [
     weight: 0.06,
   },
   {
+    key: "curiosityInitiative",
+    label: "Curiosity/initiative",
+    aliases: [
+      "curiosity/initiative",
+      "curiosity & initiative",
+      "curiosity and initiative",
+      "curiosity initiative",
+      "initiative",
+    ],
+    weight: 0.05,
+  },
+  {
     key: "persistence",
-    label: "Persistence",
-    aliases: ["persistence", "perseverance"],
-    weight: 0.04,
+    label: "Persistence/consistency",
+    aliases: [
+      "persistence",
+      "consistency",
+      "persistence / consistency",
+      "persistence consistency",
+      "perseverance",
+    ],
+    weight: 0.05,
+  },
+  {
+    key: "creativity",
+    label: "Creativity",
+    aliases: ["creativity", "creative thinking"],
+    weight: 0.03,
   },
   {
     key: "promptQuality",
@@ -135,10 +134,12 @@ export const SCORE_CATEGORIES: ScoreCategory[] = [
       "prompt quality",
       "prompting quality",
       "prompt effectiveness",
+      "ability to ask useful questions",
       "asking useful questions",
+      "prompt quality / ability to ask useful questions",
       "prompt quality asking useful questions",
     ],
-    weight: 0.03,
+    weight: 0.02,
   },
 ];
 
@@ -242,19 +243,7 @@ function extractInlineCompressedScore(
   return undefined;
 }
 
-function extractCategoryScore(responseText: string, category: ScoreCategory) {
-  const tableScore = extractMarkdownTableScore(responseText, category);
-
-  if (tableScore !== undefined) {
-    return tableScore;
-  }
-
-  const inlineScore = extractInlineCompressedScore(responseText, category);
-
-  if (inlineScore !== undefined) {
-    return inlineScore;
-  }
-
+function extractLineScore(responseText: string, category: ScoreCategory) {
   const lines = responseText.split(/\r?\n/).map(normalizeScoreLine);
 
   for (const alias of category.aliases) {
@@ -282,6 +271,14 @@ function extractCategoryScore(responseText: string, category: ScoreCategory) {
   }
 
   return undefined;
+}
+
+function extractCategoryScore(responseText: string, category: ScoreCategory) {
+  return (
+    extractMarkdownTableScore(responseText, category) ??
+    extractInlineCompressedScore(responseText, category) ??
+    extractLineScore(responseText, category)
+  );
 }
 
 export function extractScores(responseText: string) {
@@ -316,32 +313,45 @@ export function extractAiReportedScore(responseText: string) {
   return clampScore(Number(match[1]));
 }
 
-export function calculateOverallScore(scores: ScoreMap) {
-  let weightedTotal = 0;
-  let usedWeight = 0;
-
-  SCORE_CATEGORIES.forEach((category) => {
+export function getWeightedScoreBreakdown(scores: ScoreMap) {
+  return SCORE_CATEGORIES.flatMap((category) => {
     const score = scores[category.key];
 
     if (score === undefined) {
-      return;
+      return [];
     }
 
-    weightedTotal += score * category.weight;
-    usedWeight += category.weight;
+    return [
+      {
+        key: category.key,
+        label: category.label,
+        score,
+        weight: category.weight,
+        weightedValue: score * category.weight,
+      },
+    ];
   });
+}
 
-  if (usedWeight === 0) {
-    return 0;
-  }
+export function calculateOverallScore(scores: ScoreMap) {
+  const weightedTotal = getWeightedScoreBreakdown(scores).reduce(
+    (total, item) => total + item.weightedValue,
+    0,
+  );
 
-  return Math.round(weightedTotal / usedWeight);
+  return Math.round(weightedTotal);
 }
 
 export function analyzeResponse(responseText: string) {
   const scores = extractScores(responseText);
   const aiReportedScore = extractAiReportedScore(responseText);
+  const weightedBreakdown = getWeightedScoreBreakdown(scores);
   const calculatedScore = calculateOverallScore(scores);
+
+  console.log("[analysis] parsed categories", scores);
+  console.table(weightedBreakdown);
+  console.log("[analysis] calculated score", calculatedScore);
+  console.log("[analysis] AI reported score", aiReportedScore);
 
   if (Object.keys(scores).length === 0) {
     throw new Error("No category scores were found in the AI response.");

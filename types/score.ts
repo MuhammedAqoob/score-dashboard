@@ -5,7 +5,7 @@ export type ScoreKey =
   | "learningSpeed"
   | "analyticalThinking"
   | "creativity"
-  | "technicalLogicalThinking"
+  | "technicalThinking"
   | "communicationClarity"
   | "decisionMaking"
   | "adaptability"
