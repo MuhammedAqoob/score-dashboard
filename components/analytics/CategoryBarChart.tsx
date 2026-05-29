@@ -17,21 +17,28 @@ type CategoryBarChartProps = {
   height?: number;
 };
 
-export function CategoryBarChart({ data, height = 300 }: CategoryBarChartProps) {
+function getChartHeight(categoryCount: number, height?: number) {
+  return height ?? Math.max(360, categoryCount * 55 + 48);
+}
+
+export function CategoryBarChart({ data, height }: CategoryBarChartProps) {
   if (data.length === 0) {
     return null;
   }
 
+  const chartHeight = getChartHeight(data.length, height);
+
   return (
     <div
-      className="h-[300px] w-full max-w-full min-w-0 overflow-hidden"
-      style={{ height }}
+      className="w-full max-w-full min-w-0 overflow-hidden"
+      style={{ height: chartHeight }}
     >
-      <ResponsiveContainer height="100%" width="100%">
+      <ResponsiveContainer height="100%" minHeight={1} minWidth={1} width="100%">
         <BarChart
           data={data}
           layout="vertical"
-          margin={{ bottom: 8, left: 4, right: 8, top: 8 }}
+          barCategoryGap={14}
+          margin={{ bottom: 8, left: 24, right: 8, top: 8 }}
         >
           <CartesianGrid
             horizontal={false}
@@ -46,10 +53,11 @@ export function CategoryBarChart({ data, height = 300 }: CategoryBarChartProps) 
           />
           <YAxis
             dataKey="name"
+            interval={0}
             stroke="#71717a"
             tick={{ fill: "#d4d4d8", fontSize: 11 }}
             type="category"
-            width={158}
+            width={190}
           />
           <Tooltip
             contentStyle={{

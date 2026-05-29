@@ -21,6 +21,13 @@ export type CategoryComparisonItem = {
   average: number;
 };
 
+export type PeerComparisonItem = {
+  key: ScoreKey;
+  name: string;
+  currentUser: number;
+  selectedUser: number;
+};
+
 export type TrendPoint = {
   date: string;
   score: number;
@@ -132,6 +139,52 @@ export function buildCategoryAverages(submissions: Submission[]) {
       Math.round(value.total / value.count),
     ]),
   ) as Partial<Record<ScoreKey, number>>;
+}
+
+export function buildCategoryMaxScores(submissions: Submission[]) {
+  const maxScores = new Map<ScoreKey, number>();
+
+  getActiveValidatedSubmissions(submissions).forEach((submission) => {
+    SCORE_CATEGORIES.forEach((category) => {
+      const score = submission.scores?.[category.key];
+
+      if (score === undefined) {
+        return;
+      }
+
+      maxScores.set(
+        category.key,
+        Math.max(maxScores.get(category.key) ?? 0, score),
+      );
+    });
+  });
+
+  return Object.fromEntries(maxScores.entries()) as Partial<
+    Record<ScoreKey, number>
+  >;
+}
+
+export function buildPeerComparisonData(
+  currentScores: Partial<Record<ScoreKey, number>>,
+  selectedScores: Partial<Record<ScoreKey, number>>,
+) {
+  return SCORE_CATEGORIES.flatMap<PeerComparisonItem>((category) => {
+    const currentUser = currentScores[category.key];
+    const selectedUser = selectedScores[category.key];
+
+    if (currentUser === undefined && selectedUser === undefined) {
+      return [];
+    }
+
+    return [
+      {
+        key: category.key,
+        name: category.label,
+        currentUser: currentUser ?? 0,
+        selectedUser: selectedUser ?? 0,
+      },
+    ];
+  });
 }
 
 export function buildCategoryComparisonData(

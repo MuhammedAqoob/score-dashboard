@@ -24,7 +24,7 @@ export function ScoreTrendChart({
 
   return (
     <div className="h-[240px] w-full max-w-full min-w-0 overflow-hidden sm:h-[280px]">
-      <ResponsiveContainer height="100%" width="100%">
+      <ResponsiveContainer height="100%" minHeight={1} minWidth={1} width="100%">
         <LineChart data={data} margin={{ bottom: 8, left: 0, right: 8, top: 12 }}>
           <CartesianGrid stroke="#27272a" strokeDasharray="3 3" />
           <XAxis

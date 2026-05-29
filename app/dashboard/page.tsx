@@ -80,7 +80,7 @@ function AnalyticsGraphCard({
 
       {chartData.length > 0 ? (
         <div className="mt-4 min-w-0">
-          <CategoryBarChart data={chartData} height={360} />
+          <CategoryBarChart data={chartData} />
         </div>
       ) : (
         <p className="mt-4 rounded-md border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm text-zinc-400">

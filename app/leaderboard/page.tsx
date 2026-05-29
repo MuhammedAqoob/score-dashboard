@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { Timestamp } from "firebase/firestore";
+import { LeaderboardComparisonModal } from "@/components/LeaderboardComparisonModal";
+import { useAuth } from "@/hooks/useAuth";
 import { useLeaderboard } from "@/hooks/useLeaderboard";
 
 function formatDate(timestamp?: Timestamp) {
@@ -33,8 +35,10 @@ function getRankClass(rank: number) {
 }
 
 export default function LeaderboardPage() {
+  const { profile } = useAuth();
   const { entries, loading, error } = useLeaderboard(100);
   const [search, setSearch] = useState("");
+  const [compareUsername, setCompareUsername] = useState<string | null>(null);
   const filteredEntries = useMemo(() => {
     const searchValue = search.trim().toLowerCase();
 
@@ -92,6 +96,7 @@ export default function LeaderboardPage() {
                     <th className="px-5 py-4 font-medium">Top Score</th>
                     <th className="px-5 py-4 font-medium">Average</th>
                     <th className="px-5 py-4 font-medium">Date Achieved</th>
+                    <th className="px-5 py-4 font-medium">Compare</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -129,6 +134,18 @@ export default function LeaderboardPage() {
                         <td className="px-5 py-4 text-zinc-400">
                           {formatDate(entry.dateAchieved)}
                         </td>
+                        <td className="px-5 py-4">
+                          <button
+                            className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-semibold text-zinc-100 transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
+                            disabled={profile?.username === entry.username}
+                            onClick={() => setCompareUsername(entry.username)}
+                            type="button"
+                          >
+                            {profile?.username === entry.username
+                              ? "You"
+                              : "Compare"}
+                          </button>
+                        </td>
                       </tr>
                     );
                   })}
@@ -138,6 +155,11 @@ export default function LeaderboardPage() {
           )}
         </section>
       </section>
+      <LeaderboardComparisonModal
+        currentUsername={profile?.username}
+        onClose={() => setCompareUsername(null)}
+        selectedUsername={compareUsername}
+      />
     </main>
   );
 }

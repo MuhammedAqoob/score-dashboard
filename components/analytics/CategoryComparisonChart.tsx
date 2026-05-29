@@ -16,18 +16,27 @@ type CategoryComparisonChartProps = {
   data: CategoryComparisonItem[];
 };
 
+function getChartHeight(categoryCount: number) {
+  return Math.max(420, categoryCount * 64 + 64);
+}
+
 export function CategoryComparisonChart({ data }: CategoryComparisonChartProps) {
   if (data.length === 0) {
     return null;
   }
 
   return (
-    <div className="h-[320px] w-full max-w-full min-w-0 overflow-hidden">
-      <ResponsiveContainer height="100%" width="100%">
+    <div
+      className="w-full max-w-full min-w-0 overflow-hidden"
+      style={{ height: getChartHeight(data.length) }}
+    >
+      <ResponsiveContainer height="100%" minHeight={1} minWidth={1} width="100%">
         <BarChart
           data={data}
           layout="vertical"
-          margin={{ bottom: 8, left: 4, right: 8, top: 8 }}
+          barCategoryGap={16}
+          barGap={6}
+          margin={{ bottom: 8, left: 24, right: 8, top: 8 }}
         >
           <CartesianGrid
             horizontal={false}
@@ -42,10 +51,11 @@ export function CategoryComparisonChart({ data }: CategoryComparisonChartProps) 
           />
           <YAxis
             dataKey="name"
+            interval={0}
             stroke="#71717a"
             tick={{ fill: "#d4d4d8", fontSize: 11 }}
             type="category"
-            width={158}
+            width={190}
           />
           <Tooltip
             contentStyle={{

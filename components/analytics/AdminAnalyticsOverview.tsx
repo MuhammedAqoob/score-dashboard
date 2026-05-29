@@ -89,7 +89,12 @@ export function AdminAnalyticsOverview({
           {analytics.validationRatio.some((item) => item.value > 0) ? (
             <>
               <div className="h-[180px] sm:h-[200px]">
-                <ResponsiveContainer height="100%" width="100%">
+                <ResponsiveContainer
+                  height="100%"
+                  minHeight={1}
+                  minWidth={1}
+                  width="100%"
+                >
                   <PieChart>
                     <Pie
                       data={analytics.validationRatio}
@@ -143,7 +148,12 @@ export function AdminAnalyticsOverview({
         <h3 className="font-semibold text-white">Daily submission count</h3>
         {analytics.dailySubmissionCounts.length > 0 ? (
           <div className="h-[220px] sm:h-[240px]">
-            <ResponsiveContainer height="100%" width="100%">
+            <ResponsiveContainer
+              height="100%"
+              minHeight={1}
+              minWidth={1}
+              width="100%"
+            >
               <BarChart
                 data={analytics.dailySubmissionCounts}
                 margin={{ bottom: 8, left: 0, right: 16, top: 12 }}
