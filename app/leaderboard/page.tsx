@@ -48,8 +48,8 @@ export default function LeaderboardPage() {
   }, [entries, search]);
 
   return (
-    <main className="min-h-screen bg-zinc-950 px-6 py-8 text-zinc-200">
-      <section className="mx-auto flex w-full max-w-6xl flex-col gap-6">
+    <main className="min-h-screen overflow-x-hidden bg-zinc-950 px-4 py-6 text-zinc-200 sm:px-6 sm:py-8">
+      <section className="mx-auto flex w-full max-w-6xl min-w-0 flex-col gap-6">
         <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
@@ -74,7 +74,7 @@ export default function LeaderboardPage() {
           </label>
         </header>
 
-        <section className="overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900 shadow-sm shadow-black/20">
+        <section className="max-w-full overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 shadow-sm shadow-black/20">
           {loading && <p className="p-5 text-sm text-zinc-400">Loading rankings...</p>}
           {error && <p className="p-5 text-sm text-red-200">{error}</p>}
 
@@ -85,7 +85,7 @@ export default function LeaderboardPage() {
           {!loading && !error && filteredEntries.length > 0 && (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[680px] text-left text-sm">
-                <thead className="bg-zinc-950/60 text-zinc-400">
+                <thead className="sticky top-0 bg-zinc-950 text-zinc-400">
                   <tr>
                     <th className="px-5 py-4 font-medium">Rank</th>
                     <th className="px-5 py-4 font-medium">Username</th>

@@ -17,20 +17,27 @@ type CategoryBarChartProps = {
   height?: number;
 };
 
-export function CategoryBarChart({ data, height = 320 }: CategoryBarChartProps) {
+export function CategoryBarChart({ data, height = 300 }: CategoryBarChartProps) {
   if (data.length === 0) {
     return null;
   }
 
   return (
-    <div className="h-[320px] min-w-0 sm:h-[360px]" style={{ height }}>
+    <div
+      className="h-[300px] w-full max-w-full min-w-0 overflow-hidden"
+      style={{ height }}
+    >
       <ResponsiveContainer height="100%" width="100%">
         <BarChart
           data={data}
           layout="vertical"
-          margin={{ bottom: 8, left: 8, right: 16, top: 8 }}
+          margin={{ bottom: 8, left: 4, right: 8, top: 8 }}
         >
-          <CartesianGrid horizontal={false} stroke="#27272a" strokeDasharray="3 3" />
+          <CartesianGrid
+            horizontal={false}
+            stroke="#27272a"
+            strokeDasharray="3 3"
+          />
           <XAxis
             domain={[0, 100]}
             stroke="#71717a"
@@ -40,9 +47,9 @@ export function CategoryBarChart({ data, height = 320 }: CategoryBarChartProps) 
           <YAxis
             dataKey="name"
             stroke="#71717a"
-            tick={{ fill: "#d4d4d8", fontSize: 12 }}
+            tick={{ fill: "#d4d4d8", fontSize: 11 }}
             type="category"
-            width={120}
+            width={158}
           />
           <Tooltip
             contentStyle={{

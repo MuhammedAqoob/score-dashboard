@@ -22,14 +22,18 @@ export function CategoryComparisonChart({ data }: CategoryComparisonChartProps) 
   }
 
   return (
-    <div className="h-[340px] min-w-0 sm:h-[380px]">
+    <div className="h-[320px] w-full max-w-full min-w-0 overflow-hidden">
       <ResponsiveContainer height="100%" width="100%">
         <BarChart
           data={data}
           layout="vertical"
-          margin={{ bottom: 8, left: 8, right: 16, top: 8 }}
+          margin={{ bottom: 8, left: 4, right: 8, top: 8 }}
         >
-          <CartesianGrid horizontal={false} stroke="#27272a" strokeDasharray="3 3" />
+          <CartesianGrid
+            horizontal={false}
+            stroke="#27272a"
+            strokeDasharray="3 3"
+          />
           <XAxis
             domain={[0, 100]}
             stroke="#71717a"
@@ -39,9 +43,9 @@ export function CategoryComparisonChart({ data }: CategoryComparisonChartProps) 
           <YAxis
             dataKey="name"
             stroke="#71717a"
-            tick={{ fill: "#d4d4d8", fontSize: 12 }}
+            tick={{ fill: "#d4d4d8", fontSize: 11 }}
             type="category"
-            width={120}
+            width={158}
           />
           <Tooltip
             contentStyle={{

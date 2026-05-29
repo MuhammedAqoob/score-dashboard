@@ -81,19 +81,19 @@ export function SubmissionAnalyticsPanel({
     result.validated && activeValidatedSubmissions.length >= 2;
 
   return (
-    <section className="rounded-lg border border-zinc-800 bg-zinc-900 p-5">
-      <div className="flex flex-col gap-4 border-b border-zinc-800 pb-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
+    <section className="min-w-0 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 p-4 sm:p-5">
+      <div className="flex min-w-0 flex-col gap-4 border-b border-zinc-800 pb-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
           <p className="text-sm font-medium text-emerald-400">
             Submission analytics
           </p>
           <h2 className="mt-1 text-2xl font-bold text-white">
             {result.validated ? "Validated result" : "Validation mismatch"}
           </h2>
-          <p className="mt-2 text-sm text-zinc-400">{result.message}</p>
+          <p className="mt-2 break-words text-sm text-zinc-400">{result.message}</p>
         </div>
         <div
-          className={`rounded-lg border px-4 py-3 text-sm ${
+          className={`shrink-0 rounded-lg border px-4 py-3 text-sm ${
             result.validated
               ? "border-emerald-900/70 bg-emerald-950/30 text-emerald-100"
               : "border-red-900/70 bg-red-950/30 text-red-100"
@@ -142,15 +142,15 @@ export function SubmissionAnalyticsPanel({
       )}
 
       {result.validated && (
-        <div className="mt-6 grid gap-5">
-          <div className="rounded-lg border border-zinc-800 bg-zinc-950 p-4">
+        <div className="mt-6 grid min-w-0 gap-4">
+          <div className="min-w-0 overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950 p-3 sm:p-4">
             <h3 className="text-lg font-semibold text-white">
               Category score chart
             </h3>
             <CategoryBarChart data={categoryData} />
           </div>
 
-          <div className="rounded-lg border border-zinc-800 bg-zinc-950 p-4">
+          <div className="min-w-0 overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950 p-3 sm:p-4">
             <h3 className="text-lg font-semibold text-white">
               Today vs average
             </h3>
@@ -163,7 +163,7 @@ export function SubmissionAnalyticsPanel({
             )}
           </div>
 
-          <div className="rounded-lg border border-zinc-800 bg-zinc-950 p-4">
+          <div className="min-w-0 overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950 p-3 sm:p-4">
             <h3 className="text-lg font-semibold text-white">
               Score trend history
             </h3>

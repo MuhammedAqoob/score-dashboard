@@ -170,14 +170,14 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-zinc-950 px-6 py-8 text-zinc-200">
-      <section className="mx-auto flex w-full max-w-6xl flex-col gap-8">
-        <header className="flex flex-col gap-3">
+    <main className="min-h-screen overflow-x-hidden bg-zinc-950 px-4 py-6 text-zinc-200 sm:px-6 sm:py-8">
+      <section className="mx-auto flex w-full max-w-6xl min-w-0 flex-col gap-6 sm:gap-8">
+        <header className="flex min-w-0 flex-col gap-3">
           <p className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
             Home
           </p>
-          <div className="max-w-3xl">
-            <h1 className="text-3xl font-bold text-white sm:text-4xl">
+          <div className="max-w-3xl min-w-0">
+            <h1 className="break-words text-3xl font-bold text-white sm:text-4xl">
               Copy the prompt, run it in your AI, and submit your score.
             </h1>
             <p className="mt-3 text-sm leading-6 text-zinc-400">
@@ -187,16 +187,16 @@ export default function Home() {
           </div>
         </header>
 
-        <div className="grid gap-6 lg:grid-cols-2">
-          <article className="rounded-lg border border-zinc-800 bg-zinc-900 p-5 shadow-sm shadow-black/20">
-            <div className="flex flex-col gap-4 border-b border-zinc-800 pb-4 sm:flex-row sm:items-start sm:justify-between">
-              <div>
+        <div className="grid min-w-0 gap-6 lg:grid-cols-2">
+          <article className="min-w-0 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 p-4 shadow-sm shadow-black/20 sm:p-5">
+            <div className="flex min-w-0 flex-col gap-4 border-b border-zinc-800 pb-4 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0">
                 <p className="text-sm text-zinc-400">Official prompt</p>
                 <h2 className="mt-1 text-2xl font-bold text-white">
                   {prompt?.title ?? "Prompt"}
                 </h2>
                 {prompt && (
-                  <p className="mt-2 text-sm text-zinc-500">
+                  <p className="mt-2 break-words text-sm text-zinc-500">
                     Version v{prompt.version} - Updated {formatDate(prompt.updatedAt)}
                   </p>
                 )}
@@ -219,13 +219,13 @@ export default function Home() {
               )}
 
               {prompt && (
-                <pre className="max-h-[400px] overflow-y-auto scroll-smooth whitespace-pre-wrap rounded-md border border-zinc-800 bg-zinc-950 p-4 text-sm leading-6 text-zinc-100">
+                <pre className="max-h-[400px] max-w-full overflow-y-auto overflow-x-hidden whitespace-pre-wrap break-words rounded-md border border-zinc-800 bg-zinc-950 p-4 text-sm leading-6 text-zinc-100 [overflow-wrap:anywhere]">
                   {prompt.content}
                 </pre>
               )}
             </div>
 
-            <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="mt-5 flex min-w-0 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
               <button
                 className="w-full cursor-pointer rounded-md bg-zinc-100 px-5 py-3 text-sm font-bold text-zinc-950 transition hover:bg-zinc-300 active:bg-zinc-400 disabled:cursor-not-allowed disabled:bg-zinc-800 disabled:text-zinc-500 sm:w-auto"
                 disabled={!prompt}
@@ -241,14 +241,14 @@ export default function Home() {
           </article>
 
           <form
-            className="rounded-lg border border-zinc-800 bg-zinc-900 p-5 shadow-sm shadow-black/20"
+            className="min-w-0 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 p-4 shadow-sm shadow-black/20 sm:p-5"
             onSubmit={handleSubmitResponse}
           >
             <div className="flex flex-col gap-2">
               <p className="text-sm text-zinc-400">Score submission</p>
               <h2 className="text-2xl font-bold text-white">Paste AI Output</h2>
               {profile && (
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <span className="text-sm text-zinc-400">Account status</span>
                   <StatusBadge status={userStatus} />
                 </div>
@@ -274,11 +274,11 @@ export default function Home() {
               )}
             </div>
 
-            <div className="mt-4 flex items-center justify-between gap-3">
+            <div className="mt-4 flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <label className="text-sm font-medium text-zinc-300">
                 Response text
               </label>
-              <div className="flex items-center gap-2">
+              <div className="flex min-w-0 flex-wrap items-center gap-2">
                 <button
                   className="cursor-pointer rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-semibold text-zinc-200 transition hover:bg-zinc-800 active:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50"
                   disabled={!canSubmit || submissionLocked}
@@ -288,13 +288,13 @@ export default function Home() {
                   Paste
                 </button>
                 {pasteMessage && (
-                  <span className="text-xs text-zinc-400">{pasteMessage}</span>
+                  <span className="break-words text-xs text-zinc-400">{pasteMessage}</span>
                 )}
               </div>
             </div>
 
             <textarea
-              className="mt-2 min-h-72 w-full resize-y rounded-md border border-zinc-700 bg-zinc-950 px-3 py-3 text-sm leading-6 text-zinc-50 outline-none transition focus:border-emerald-400 disabled:cursor-not-allowed disabled:opacity-50"
+              className="mt-2 min-h-72 w-full max-w-full resize-y rounded-md border border-zinc-700 bg-zinc-950 px-3 py-3 text-sm leading-6 text-zinc-50 outline-none transition focus:border-emerald-400 disabled:cursor-not-allowed disabled:opacity-50"
               disabled={!canSubmit || submissionLocked}
               onChange={(event) => setResponseText(event.target.value)}
               placeholder="Paste the response you got from ChatGPT, Gemini, Claude, or another AI tool."
@@ -304,7 +304,7 @@ export default function Home() {
             <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <input
                 accept=".txt,text/plain"
-                className="text-sm text-zinc-300 file:mr-4 file:cursor-pointer file:rounded-md file:border-0 file:bg-zinc-100 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-zinc-950 file:transition file:hover:bg-zinc-300 disabled:cursor-not-allowed disabled:opacity-50"
+                className="w-full max-w-full min-w-0 text-sm text-zinc-300 file:mr-4 file:cursor-pointer file:rounded-md file:border-0 file:bg-zinc-100 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-zinc-950 file:transition file:hover:bg-zinc-300 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
                 disabled={!canSubmit || submissionLocked}
                 onChange={handleFileUpload}
                 type="file"
@@ -343,7 +343,7 @@ export default function Home() {
           />
         )}
 
-        <section className="rounded-lg border border-zinc-800 bg-zinc-900 p-5">
+        <section className="min-w-0 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 p-4 sm:p-5">
           <div className="max-w-2xl">
             <p className="text-sm font-medium text-emerald-400">Quick Steps</p>
             <h2 className="mt-1 text-2xl font-bold text-white">

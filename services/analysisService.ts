@@ -32,7 +32,7 @@ export const SCORE_WEIGHTS: Record<ScoreKey, number> = {
   planningExecution: 6,
   curiosityInitiative: 5,
   persistence: 5,
-  decisionMaking: 5,
+  decisionMaking: 0,
   creativity: 3,
   promptQuality: 2,
 };
@@ -248,26 +248,30 @@ function getScorecardAliases(category: ScoreCategory) {
   ].map(normalizeScorecardKey);
 }
 
-function extractScorecardValue(scorecardBlock: string, acceptedKeys: string[]) {
-  const lines = scorecardBlock.split(/\r?\n/).map(normalizeScoreLine);
+function extractScorecardPairs(scorecardBlock: string) {
+  const pairRegex =
+    /(?:^|[\s,;])([A-Za-z][A-Za-z0-9_/&_\-\s]*?)\s*(?::|=|-)\s*(\d{1,3})(?:\s*\/\s*100|\s*%)?(?=$|[\s,;])/gi;
+  const pairs: Array<{ rawKey: string; key: string; value: number }> = [];
 
-  for (const line of lines) {
-    const match = line.match(
-      /^\s*([A-Za-z0-9_/&_\-\s]+?)\s*(?::|=|-)\s*(\d{1,3})(?:\s*\/\s*100|\s*%)?\s*$/i,
-    );
-
-    if (!match?.[1] || !match[2]) {
+  for (const match of scorecardBlock.matchAll(pairRegex)) {
+    if (!match[1] || !match[2]) {
       continue;
     }
 
-    const key = normalizeScorecardKey(match[1]);
-
-    if (acceptedKeys.includes(key)) {
-      return clampScore(Number(match[2]));
-    }
+    pairs.push({
+      rawKey: normalizeScoreLine(match[1]),
+      key: normalizeScorecardKey(match[1]),
+      value: clampScore(Number(match[2])),
+    });
   }
 
-  return undefined;
+  return pairs;
+}
+
+function extractScorecardValue(scorecardBlock: string, acceptedKeys: string[]) {
+  return extractScorecardPairs(scorecardBlock).find((pair) =>
+    acceptedKeys.includes(pair.key),
+  )?.value;
 }
 
 function extractCategoryScore(scorecardBlock: string, category: ScoreCategory) {
@@ -378,6 +382,8 @@ export function analyzeResponse(responseText: string) {
   const missingScoreLabels = getMissingScoreLabels(scores);
 
   logAnalysisDebug("[analysis] scorecard block", scorecardBlock);
+  logAnalysisDebug("[analysis] scorecard pairs", extractScorecardPairs(scorecardBlock));
+  logAnalysisDebug("[analysis] detected category keys", Object.keys(scores));
   logAnalysisDebug("[analysis] parsed categories", scores);
   tableAnalysisDebug(weightedBreakdown);
   logAnalysisDebug("[analysis] totalWeight", weightedScoreStats.totalWeight);
