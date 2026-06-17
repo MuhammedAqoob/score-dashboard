@@ -18,7 +18,27 @@ type CategoryBarChartProps = {
 };
 
 function getChartHeight(categoryCount: number, height?: number) {
-  return height ?? Math.max(360, categoryCount * 55 + 48);
+  return height ?? Math.max(400, categoryCount * 58 + 56);
+}
+
+function formatAxisLabel(label: string) {
+  const labelMap: Record<string, string> = {
+    "Problem-solving": "Problem",
+    Brainstorming: "Ideas",
+    "Research skill": "Research",
+    "Learning speed": "Learning",
+    "Analytical thinking": "Analytical",
+    "Technical/logical thinking": "Tech/logical",
+    "Communication clarity": "Comm.",
+    "Decision making": "Decision",
+    "Self-correction": "Self-correct",
+    "Planning/execution": "Planning",
+    "Curiosity/initiative": "Curiosity",
+    "Persistence/consistency": "Persistence",
+    "Prompt quality": "Prompt",
+  };
+
+  return labelMap[label] ?? label;
 }
 
 export function CategoryBarChart({ data, height }: CategoryBarChartProps) {
@@ -38,7 +58,7 @@ export function CategoryBarChart({ data, height }: CategoryBarChartProps) {
           data={data}
           layout="vertical"
           barCategoryGap={14}
-          margin={{ bottom: 8, left: 24, right: 8, top: 8 }}
+          margin={{ bottom: 8, left: 4, right: 8, top: 8 }}
         >
           <CartesianGrid
             horizontal={false}
@@ -56,8 +76,9 @@ export function CategoryBarChart({ data, height }: CategoryBarChartProps) {
             interval={0}
             stroke="#71717a"
             tick={{ fill: "#d4d4d8", fontSize: 11 }}
+            tickFormatter={formatAxisLabel}
             type="category"
-            width={190}
+            width={96}
           />
           <Tooltip
             contentStyle={{

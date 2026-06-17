@@ -72,8 +72,8 @@ export async function createUserProfile(
     username: cleanUsername,
     password,
     score: 0,
-    approved: false,
-    status: "pending",
+    approved: true,
+    status: "approved",
     bannedUntil: null,
     banReason: null,
     currentUid,
@@ -102,15 +102,24 @@ export async function loginUserProfile(
     throw new Error("Username or password is incorrect.");
   }
 
+  const userStatus = getEffectiveUserStatus(profile);
+  const shouldAutoApprove = userStatus !== "banned";
+
   await updateDoc(getUserProfileRef(cleanUsername), {
     currentUid,
-    ...(getEffectiveUserStatus(profile) === "approved"
+    ...(shouldAutoApprove
       ? { approved: true, status: "approved" }
       : {}),
   });
 
   return {
     ...profile,
+    ...(shouldAutoApprove
+      ? {
+          approved: true,
+          status: "approved" as const,
+        }
+      : {}),
     currentUid,
   };
 }

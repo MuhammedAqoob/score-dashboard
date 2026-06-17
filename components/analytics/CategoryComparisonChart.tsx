@@ -17,7 +17,27 @@ type CategoryComparisonChartProps = {
 };
 
 function getChartHeight(categoryCount: number) {
-  return Math.max(420, categoryCount * 64 + 64);
+  return Math.max(440, categoryCount * 66 + 72);
+}
+
+function formatAxisLabel(label: string) {
+  const labelMap: Record<string, string> = {
+    "Problem-solving": "Problem",
+    Brainstorming: "Ideas",
+    "Research skill": "Research",
+    "Learning speed": "Learning",
+    "Analytical thinking": "Analytical",
+    "Technical/logical thinking": "Tech/logical",
+    "Communication clarity": "Comm.",
+    "Decision making": "Decision",
+    "Self-correction": "Self-correct",
+    "Planning/execution": "Planning",
+    "Curiosity/initiative": "Curiosity",
+    "Persistence/consistency": "Persistence",
+    "Prompt quality": "Prompt",
+  };
+
+  return labelMap[label] ?? label;
 }
 
 export function CategoryComparisonChart({ data }: CategoryComparisonChartProps) {
@@ -36,7 +56,7 @@ export function CategoryComparisonChart({ data }: CategoryComparisonChartProps) 
           layout="vertical"
           barCategoryGap={16}
           barGap={6}
-          margin={{ bottom: 8, left: 24, right: 8, top: 8 }}
+          margin={{ bottom: 8, left: 4, right: 8, top: 8 }}
         >
           <CartesianGrid
             horizontal={false}
@@ -54,8 +74,9 @@ export function CategoryComparisonChart({ data }: CategoryComparisonChartProps) 
             interval={0}
             stroke="#71717a"
             tick={{ fill: "#d4d4d8", fontSize: 11 }}
+            tickFormatter={formatAxisLabel}
             type="category"
-            width={190}
+            width={96}
           />
           <Tooltip
             contentStyle={{

@@ -59,7 +59,7 @@ export function AppNav() {
   };
 
   return (
-    <nav className="sticky top-0 z-30 border-b border-zinc-800 bg-zinc-950/95 px-6 py-3 text-zinc-50 backdrop-blur">
+    <nav className="sticky top-0 z-30 overflow-visible border-b border-zinc-800 bg-zinc-950/95 px-4 py-3 text-zinc-50 backdrop-blur sm:px-6">
       <div className="mx-auto grid w-full max-w-6xl grid-cols-[1fr_auto] items-center gap-4 md:grid-cols-[1fr_auto_1fr]">
         <Link
           className="text-lg font-bold tracking-normal text-white transition-colors hover:text-zinc-300"
@@ -71,6 +71,12 @@ export function AppNav() {
         <div className="hidden items-center gap-2 rounded-full border border-zinc-800 bg-zinc-900/70 p-1 text-sm md:flex">
           <Link className={`rounded-full px-4 py-2 ${activeLinkClass("/")}`} href="/">
             Home
+          </Link>
+          <Link
+            className={`rounded-full px-4 py-2 ${activeLinkClass("/dashboard")}`}
+            href="/dashboard"
+          >
+            Dashboard
           </Link>
           <Link
             className={`rounded-full px-4 py-2 ${activeLinkClass("/leaderboard")}`}
@@ -99,7 +105,7 @@ export function AppNav() {
               </button>
 
               {open && (
-                <div className="absolute right-0 mt-3 w-56 overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900 shadow-xl shadow-black/40">
+                <div className="absolute right-0 top-full z-50 mt-3 w-56 overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900 shadow-xl shadow-black/40">
                   <div className="border-b border-zinc-800 px-4 py-3">
                     <p className="text-sm font-semibold text-white">
                       {isAdmin ? "Admin" : profile?.username}
@@ -110,15 +116,6 @@ export function AppNav() {
                       </p>
                     )}
                   </div>
-
-                  {profile && (
-                    <Link
-                      className="block px-4 py-3 text-sm text-zinc-200 transition hover:bg-zinc-800"
-                      href="/dashboard"
-                    >
-                      My Dashboard
-                    </Link>
-                  )}
 
                   {isAdmin && (
                     <Link
@@ -151,9 +148,15 @@ export function AppNav() {
         </div>
       </div>
 
-      <div className="mx-auto mt-3 flex w-full max-w-6xl gap-2 text-sm md:hidden">
+      <div className="mx-auto mt-3 flex w-full max-w-6xl justify-center gap-2 overflow-x-auto text-sm md:hidden">
         <Link className={`rounded-full px-4 py-2 ${activeLinkClass("/")}`} href="/">
           Home
+        </Link>
+        <Link
+          className={`rounded-full px-4 py-2 ${activeLinkClass("/dashboard")}`}
+          href="/dashboard"
+        >
+          Dashboard
         </Link>
         <Link
           className={`rounded-full px-4 py-2 ${activeLinkClass("/leaderboard")}`}

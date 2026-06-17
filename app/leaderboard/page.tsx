@@ -87,8 +87,61 @@ export default function LeaderboardPage() {
           )}
 
           {!loading && !error && filteredEntries.length > 0 && (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[680px] text-left text-sm">
+            <>
+            <div className="grid gap-3 p-3 md:hidden">
+              {filteredEntries.map((entry) => {
+                const rank =
+                  entries.findIndex(
+                    (leaderboardEntry) =>
+                      leaderboardEntry.username === entry.username,
+                  ) + 1;
+
+                return (
+                  <article
+                    className={`rounded-xl border p-4 ${getRankClass(rank)}`}
+                    key={entry.username}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <span className="inline-flex min-w-9 justify-center rounded-full border border-zinc-700 bg-zinc-950 px-3 py-1 text-sm font-bold text-white">
+                          #{rank}
+                        </span>
+                        <h2 className="mt-3 break-words text-lg font-semibold text-white">
+                          {entry.username}
+                        </h2>
+                      </div>
+                      <button
+                        className="shrink-0 rounded-md bg-emerald-500 px-3 py-2 text-xs font-bold text-zinc-950 transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:bg-zinc-700 disabled:text-zinc-400"
+                        disabled={profile?.username === entry.username}
+                        onClick={() => setCompareUsername(entry.username)}
+                        type="button"
+                      >
+                        {profile?.username === entry.username ? "You" : "Compare"}
+                      </button>
+                    </div>
+                    <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                      <div className="rounded-lg border border-zinc-800 bg-zinc-950 p-3">
+                        <p className="text-zinc-500">Top Score</p>
+                        <p className="mt-1 font-bold text-emerald-400">
+                          {entry.topScore}/100
+                        </p>
+                      </div>
+                      <div className="rounded-lg border border-zinc-800 bg-zinc-950 p-3">
+                        <p className="text-zinc-500">Average</p>
+                        <p className="mt-1 font-bold text-zinc-100">
+                          {entry.averageScore}/100
+                        </p>
+                      </div>
+                    </div>
+                    <p className="mt-3 text-xs text-zinc-500">
+                      Date achieved: {formatDate(entry.dateAchieved)}
+                    </p>
+                  </article>
+                );
+              })}
+            </div>
+            <div className="hidden overflow-x-auto md:block">
+              <table className="w-full min-w-[760px] text-left text-sm">
                 <thead className="sticky top-0 bg-zinc-950 text-zinc-400">
                   <tr>
                     <th className="px-5 py-4 font-medium">Rank</th>
@@ -136,7 +189,7 @@ export default function LeaderboardPage() {
                         </td>
                         <td className="px-5 py-4">
                           <button
-                            className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-semibold text-zinc-100 transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
+                            className="rounded-md bg-emerald-500 px-3 py-1.5 text-xs font-bold text-zinc-950 transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:bg-zinc-700 disabled:text-zinc-400"
                             disabled={profile?.username === entry.username}
                             onClick={() => setCompareUsername(entry.username)}
                             type="button"
@@ -152,6 +205,7 @@ export default function LeaderboardPage() {
                 </tbody>
               </table>
             </div>
+            </>
           )}
         </section>
       </section>

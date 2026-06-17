@@ -2,10 +2,10 @@
 
 import { useMemo } from "react";
 import {
-  Bar,
-  BarChart,
   CartesianGrid,
   Legend,
+  Line,
+  LineChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -77,7 +77,26 @@ function PeerComparisonChart({
   currentUsername: string;
   selectedUsername: string;
 }) {
-  const chartHeight = Math.max(420, data.length * 64 + 64);
+  const chartHeight = Math.max(440, data.length * 58 + 64);
+  const formatAxisLabel = (label: string) => {
+    const labelMap: Record<string, string> = {
+      "Problem-solving": "Problem",
+      Brainstorming: "Ideas",
+      "Research skill": "Research",
+      "Learning speed": "Learning",
+      "Analytical thinking": "Analytical",
+      "Technical/logical thinking": "Tech/logical",
+      "Communication clarity": "Comm.",
+      "Decision making": "Decision",
+      "Self-correction": "Self-correct",
+      "Planning/execution": "Planning",
+      "Curiosity/initiative": "Curiosity",
+      "Persistence/consistency": "Persistence",
+      "Prompt quality": "Prompt",
+    };
+
+    return labelMap[label] ?? label;
+  };
 
   return (
     <section className="min-w-0 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 p-4">
@@ -97,12 +116,10 @@ function PeerComparisonChart({
             minWidth={1}
             width="100%"
           >
-            <BarChart
+            <LineChart
               data={data}
               layout="vertical"
-              barCategoryGap={16}
-              barGap={6}
-              margin={{ bottom: 8, left: 24, right: 8, top: 8 }}
+              margin={{ bottom: 8, left: 4, right: 8, top: 8 }}
             >
               <CartesianGrid
                 horizontal={false}
@@ -120,8 +137,9 @@ function PeerComparisonChart({
                 interval={0}
                 stroke="#71717a"
                 tick={{ fill: "#d4d4d8", fontSize: 11 }}
+                tickFormatter={formatAxisLabel}
                 type="category"
-                width={190}
+                width={96}
               />
               <Tooltip
                 contentStyle={{
@@ -133,21 +151,27 @@ function PeerComparisonChart({
                 cursor={{ fill: "rgba(63, 63, 70, 0.24)" }}
               />
               <Legend wrapperStyle={{ color: "#d4d4d8", fontSize: 12 }} />
-              <Bar
+              <Line
                 animationDuration={700}
                 dataKey="currentUser"
-                fill="#22c55e"
                 name={currentUsername}
-                radius={[0, 8, 8, 0]}
+                stroke="#22c55e"
+                strokeWidth={3}
+                dot={{ fill: "#22c55e", r: 3 }}
+                activeDot={{ r: 5, stroke: "#bbf7d0", strokeWidth: 2 }}
+                type="monotone"
               />
-              <Bar
+              <Line
                 animationDuration={700}
                 dataKey="selectedUser"
-                fill="#a1a1aa"
                 name={selectedUsername}
-                radius={[0, 8, 8, 0]}
+                stroke="#a1a1aa"
+                strokeWidth={3}
+                dot={{ fill: "#a1a1aa", r: 3 }}
+                activeDot={{ r: 5, stroke: "#f4f4f5", strokeWidth: 2 }}
+                type="monotone"
               />
-            </BarChart>
+            </LineChart>
           </ResponsiveContainer>
         </div>
       )}

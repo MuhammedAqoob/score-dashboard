@@ -229,8 +229,13 @@ function normalizeScorecardKey(value: string) {
 }
 
 export function extractScorecardBlock(responseText: string) {
-  const match = responseText.match(
-    /BEGIN_SCORECARD\s*([\s\S]*?)\s*END_SCORECARD/i,
+  const normalizedText = responseText
+    .replace(/\*\*/g, "")
+    .replace(/__/g, "")
+    .replace(/`/g, "")
+    .replace(/[\u2013\u2014]/g, "-");
+  const match = normalizedText.match(
+    /BEGIN[\s_-]*SCORECARD\s*:?\s*([\s\S]*?)\s*END[\s_-]*SCORECARD/i,
   );
 
   return match?.[1]?.trim() ?? null;
