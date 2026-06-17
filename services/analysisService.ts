@@ -253,19 +253,43 @@ function getScorecardAliases(category: ScoreCategory) {
   ].map(normalizeScorecardKey);
 }
 
-function extractScorecardPairs(scorecardBlock: string) {
-  const pairRegex =
-    /(?:^|[\s,;])([A-Za-z][A-Za-z0-9_/&_\-\s]*?)\s*(?::|=|-)\s*(\d{1,3})(?:\s*\/\s*100|\s*%)?(?=$|[\s,;])/gi;
-  const pairs: Array<{ rawKey: string; key: string; value: number }> = [];
+function getAcceptedScorecardKeys() {
+  const acceptedKeys = new Set<string>([
+    "final weighted score",
+    "final weightedscore",
+  ]);
 
-  for (const match of scorecardBlock.matchAll(pairRegex)) {
+  SCORE_CATEGORIES.forEach((category) => {
+    getScorecardAliases(category).forEach((alias) => acceptedKeys.add(alias));
+  });
+
+  return acceptedKeys;
+}
+
+function extractScorecardPairs(scorecardBlock: string) {
+  const pairs: Array<{ rawKey: string; key: string; value: number }> = [];
+  const acceptedKeys = getAcceptedScorecardKeys();
+  const normalizedBlock = scorecardBlock
+    .replace(/\r\n/g, "\n")
+    .replace(/\r/g, "\n")
+    .replace(/[\t ]+/g, " ");
+  const pairRegex =
+    /([A-Za-z][A-Za-z0-9_/&_-]*(?:[ ]+[A-Za-z][A-Za-z0-9_/&_-]*)*)\s*(?::|=)\s*(\d{1,3})(?:\s*\/\s*100|\s*%)?/g;
+
+  for (const match of normalizedBlock.matchAll(pairRegex)) {
     if (!match[1] || !match[2]) {
+      continue;
+    }
+
+    const key = normalizeScorecardKey(match[1]);
+
+    if (!acceptedKeys.has(key)) {
       continue;
     }
 
     pairs.push({
       rawKey: normalizeScoreLine(match[1]),
-      key: normalizeScorecardKey(match[1]),
+      key,
       value: clampScore(Number(match[2])),
     });
   }
@@ -274,13 +298,35 @@ function extractScorecardPairs(scorecardBlock: string) {
 }
 
 function extractScorecardValue(scorecardBlock: string, acceptedKeys: string[]) {
-  return extractScorecardPairs(scorecardBlock).find((pair) =>
-    acceptedKeys.includes(pair.key),
-  )?.value;
+  const pairMap = new Map(
+    extractScorecardPairs(scorecardBlock).map((pair) => [pair.key, pair.value]),
+  );
+
+  return acceptedKeys
+    .map((key) => pairMap.get(key))
+    .find((value) => value !== undefined);
 }
 
 function extractCategoryScore(scorecardBlock: string, category: ScoreCategory) {
   return extractScorecardValue(scorecardBlock, getScorecardAliases(category));
+}
+
+function getScorecardKeyMappings(scorecardBlock: string) {
+  const pairs = extractScorecardPairs(scorecardBlock);
+
+  return SCORE_CATEGORIES.map((category) => {
+    const aliases = getScorecardAliases(category);
+    const matchedPair = pairs.find((pair) => aliases.includes(pair.key));
+
+    return {
+      scorecardKey: matchedPair?.rawKey ?? null,
+      normalizedScorecardKey: matchedPair?.key ?? null,
+      internalKey: category.key,
+      label: category.label,
+      value: matchedPair?.value ?? null,
+      weight: category.weight,
+    };
+  });
 }
 
 export function extractScores(responseText: string) {
@@ -385,12 +431,29 @@ export function analyzeResponse(responseText: string) {
   const weightedScoreStats = calculateWeightedScoreStats(scores);
   const calculatedScore = Math.round(weightedScoreStats.normalizedScore);
   const missingScoreLabels = getMissingScoreLabels(scores);
+  const weightedCalculationTable = weightedBreakdown.map((item) => ({
+    key: item.key,
+    label: item.label,
+    score: item.score,
+    weight: item.weight,
+    weightedContribution: item.weightedValue,
+  }));
 
   logAnalysisDebug("[analysis] scorecard block", scorecardBlock);
   logAnalysisDebug("[analysis] scorecard pairs", extractScorecardPairs(scorecardBlock));
+  logAnalysisDebug(
+    "[analysis] scorecard key mappings",
+    getScorecardKeyMappings(scorecardBlock),
+  );
   logAnalysisDebug("[analysis] detected category keys", Object.keys(scores));
   logAnalysisDebug("[analysis] parsed categories", scores);
-  tableAnalysisDebug(weightedBreakdown);
+  logAnalysisDebug("[analysis] weighted calculation table");
+  tableAnalysisDebug(weightedCalculationTable);
+  weightedCalculationTable.forEach((item) => {
+    logAnalysisDebug(
+      `[analysis] ${item.label}\nscore=${item.score}\nweight=${item.weight}\nweightedContribution=${item.weightedContribution}`,
+    );
+  });
   logAnalysisDebug("[analysis] totalWeight", weightedScoreStats.totalWeight);
   logAnalysisDebug("[analysis] weightedTotal", weightedScoreStats.weightedTotal);
   logAnalysisDebug(

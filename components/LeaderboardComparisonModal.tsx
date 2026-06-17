@@ -77,7 +77,7 @@ function PeerComparisonChart({
   currentUsername: string;
   selectedUsername: string;
 }) {
-  const chartHeight = Math.max(440, data.length * 58 + 64);
+  const chartHeight = 380;
   const formatAxisLabel = (label: string) => {
     const labelMap: Record<string, string> = {
       "Problem-solving": "Problem",
@@ -106,10 +106,7 @@ function PeerComparisonChart({
           Not enough category data to compare yet.
         </p>
       ) : (
-        <div
-          className="mt-4 w-full max-w-full min-w-0 overflow-hidden"
-          style={{ height: chartHeight }}
-        >
+        <div className="mt-4 w-full max-w-full min-w-0 overflow-hidden" style={{ height: chartHeight }}>
           <ResponsiveContainer
             height="100%"
             minHeight={1}
@@ -118,28 +115,32 @@ function PeerComparisonChart({
           >
             <LineChart
               data={data}
-              layout="vertical"
-              margin={{ bottom: 8, left: 4, right: 8, top: 8 }}
+              margin={{ bottom: 86, left: 0, right: 12, top: 12 }}
             >
               <CartesianGrid
-                horizontal={false}
                 stroke="#27272a"
                 strokeDasharray="3 3"
               />
               <XAxis
+                dataKey="name"
+                interval={0}
+                stroke="#71717a"
+                tick={{
+                  fill: "#d4d4d8",
+                  fontSize: 10,
+                  textAnchor: "end",
+                }}
+                tickFormatter={formatAxisLabel}
+                angle={-40}
+                height={86}
+                type="category"
+              />
+              <YAxis
                 domain={[0, 100]}
                 stroke="#71717a"
                 tick={{ fill: "#a1a1aa", fontSize: 12 }}
                 type="number"
-              />
-              <YAxis
-                dataKey="name"
-                interval={0}
-                stroke="#71717a"
-                tick={{ fill: "#d4d4d8", fontSize: 11 }}
-                tickFormatter={formatAxisLabel}
-                type="category"
-                width={96}
+                width={36}
               />
               <Tooltip
                 contentStyle={{
