@@ -1,9 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   CartesianGrid,
-  Legend,
   Line,
   LineChart,
   ResponsiveContainer,
@@ -44,6 +43,7 @@ const lineColors = [
   "#f97316",
   "#d4d4d8",
 ];
+const yAxisTicks = [0, 25, 50, 75, 100];
 
 function formatAxisLabel(label: string) {
   const labelMap: Record<string, string> = {
@@ -103,6 +103,66 @@ function StatCard({
   );
 }
 
+type LegendOption = {
+  key: string;
+  label: string;
+  color: string;
+};
+
+function ClickableLegend({
+  items,
+  selectedKey,
+  onSelect,
+}: {
+  items: LegendOption[];
+  selectedKey: string | null;
+  onSelect: (key: string | null) => void;
+}) {
+  return (
+    <div className="mt-3 flex flex-wrap gap-2">
+      {items.map((item) => {
+        const selected = selectedKey === item.key;
+        const dimmed = selectedKey !== null && !selected;
+
+        return (
+          <button
+            className={`inline-flex min-h-10 items-center gap-2 rounded-full border px-3 py-2 text-xs font-semibold transition sm:text-sm ${
+              selected
+                ? "border-zinc-500 bg-zinc-800 text-white"
+                : "border-zinc-800 bg-zinc-950 text-zinc-300 hover:border-zinc-600 hover:bg-zinc-800"
+            } ${dimmed ? "opacity-50" : "opacity-100"}`}
+            key={item.key}
+            onClick={() => onSelect(selected ? null : item.key)}
+            type="button"
+          >
+            <span
+              className="h-2.5 w-2.5 shrink-0 rounded-full"
+              style={{ backgroundColor: item.color }}
+            />
+            <span className="break-words text-left">{item.label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function getLineOpacity(dataKey: string, selectedKey: string | null) {
+  if (!selectedKey) {
+    return 1;
+  }
+
+  return selectedKey === dataKey ? 1 : 0.22;
+}
+
+function getLineWidth(dataKey: string, selectedKey: string | null) {
+  if (!selectedKey) {
+    return 3;
+  }
+
+  return selectedKey === dataKey ? 4 : 2;
+}
+
 function PeerComparisonChart({
   title,
   data,
@@ -115,84 +175,127 @@ function PeerComparisonChart({
   selectedUsername: string;
 }) {
   const chartHeight = 380;
+  const [selectedLine, setSelectedLine] = useState<string | null>(null);
+  const selectionRef = useRef<HTMLElement>(null);
+  const legendItems = [
+    { key: "currentUser", label: currentUsername, color: "#22c55e" },
+    { key: "selectedUser", label: selectedUsername, color: "#a1a1aa" },
+  ];
+
+  useEffect(() => {
+    if (!selectedLine) {
+      return;
+    }
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!selectionRef.current?.contains(event.target as Node)) {
+        setSelectedLine(null);
+      }
+    };
+
+    window.addEventListener("pointerdown", handlePointerDown);
+
+    return () => window.removeEventListener("pointerdown", handlePointerDown);
+  }, [selectedLine]);
 
   return (
-    <section className="min-w-0 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 p-4">
+    <section
+      className="min-w-0 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 p-4"
+      ref={selectionRef}
+    >
       <h3 className="font-semibold text-white">{title}</h3>
       {data.length === 0 ? (
         <p className="mt-4 rounded-md border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm text-zinc-400">
           Not enough category data to compare yet.
         </p>
       ) : (
-        <div className="mt-4 w-full max-w-full min-w-0 overflow-hidden" style={{ height: chartHeight }}>
-          <ResponsiveContainer
-            height="100%"
-            minHeight={1}
-            minWidth={1}
-            width="100%"
-          >
-            <LineChart
-              data={data}
-              margin={{ bottom: 86, left: 0, right: 12, top: 12 }}
+        <>
+          <div className="mt-4 w-full max-w-full min-w-0 overflow-hidden" style={{ height: chartHeight }}>
+            <ResponsiveContainer
+              height="100%"
+              minHeight={1}
+              minWidth={1}
+              width="100%"
             >
-              <CartesianGrid
-                stroke="#27272a"
-                strokeDasharray="3 3"
-              />
-              <XAxis
-                dataKey="name"
-                interval={0}
-                stroke="#71717a"
-                tick={{
-                  fill: "#d4d4d8",
-                  fontSize: 10,
-                  textAnchor: "end",
-                }}
-                tickFormatter={formatAxisLabel}
-                angle={-40}
-                height={86}
-                type="category"
-              />
-              <YAxis
-                domain={[0, 100]}
-                stroke="#71717a"
-                tick={{ fill: "#a1a1aa", fontSize: 12 }}
-                type="number"
-                width={36}
-              />
-              <Tooltip
-                contentStyle={{
-                  background: "#09090b",
-                  border: "1px solid #27272a",
-                  borderRadius: 8,
-                  color: "#f4f4f5",
-                }}
-                cursor={{ fill: "rgba(63, 63, 70, 0.24)" }}
-              />
-              <Legend wrapperStyle={{ color: "#d4d4d8", fontSize: 12 }} />
-              <Line
-                animationDuration={700}
-                dataKey="currentUser"
-                name={currentUsername}
-                stroke="#22c55e"
-                strokeWidth={3}
-                dot={{ fill: "#22c55e", r: 3 }}
-                activeDot={{ r: 5, stroke: "#bbf7d0", strokeWidth: 2 }}
-                type="monotone"
-              />
-              <Line
-                animationDuration={700}
-                dataKey="selectedUser"
-                name={selectedUsername}
-                stroke="#a1a1aa"
-                strokeWidth={3}
-                dot={{ fill: "#a1a1aa", r: 3 }}
-                activeDot={{ r: 5, stroke: "#f4f4f5", strokeWidth: 2 }}
-                type="monotone"
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+              <LineChart
+                data={data}
+                margin={{ bottom: 86, left: 0, right: 12, top: 12 }}
+              >
+                <CartesianGrid
+                  vertical={false}
+                  stroke="#27272a"
+                  strokeDasharray="3 3"
+                />
+                <XAxis
+                  dataKey="name"
+                  interval={0}
+                  stroke="#71717a"
+                  tick={{
+                    fill: "#d4d4d8",
+                    fontSize: 10,
+                    textAnchor: "end",
+                  }}
+                  tickFormatter={formatAxisLabel}
+                  angle={-40}
+                  height={86}
+                  type="category"
+                />
+                <YAxis
+                  domain={[0, 100]}
+                  stroke="#71717a"
+                  tick={{ fill: "#a1a1aa", fontSize: 12 }}
+                  ticks={yAxisTicks}
+                  type="number"
+                  width={36}
+                />
+                <Tooltip
+                  contentStyle={{
+                    background: "#09090b",
+                    border: "1px solid #27272a",
+                    borderRadius: 8,
+                    color: "#f4f4f5",
+                  }}
+                  cursor={{ fill: "rgba(63, 63, 70, 0.24)" }}
+                />
+                <Line
+                  animationDuration={700}
+                  dataKey="currentUser"
+                  name={currentUsername}
+                  stroke="#22c55e"
+                  strokeOpacity={getLineOpacity("currentUser", selectedLine)}
+                  strokeWidth={getLineWidth("currentUser", selectedLine)}
+                  dot={{
+                    fill: "#22c55e",
+                    opacity: getLineOpacity("currentUser", selectedLine),
+                    r: selectedLine === "currentUser" ? 4 : 3,
+                  }}
+                  activeDot={{ r: 5, stroke: "#bbf7d0", strokeWidth: 2 }}
+                  type="monotone"
+                />
+                <Line
+                  animationDuration={700}
+                  dataKey="selectedUser"
+                  name={selectedUsername}
+                  stroke="#a1a1aa"
+                  strokeOpacity={getLineOpacity("selectedUser", selectedLine)}
+                  strokeWidth={getLineWidth("selectedUser", selectedLine)}
+                  dot={{
+                    fill: "#a1a1aa",
+                    opacity: getLineOpacity("selectedUser", selectedLine),
+                    r: selectedLine === "selectedUser" ? 4 : 3,
+                  }}
+                  activeDot={{ r: 5, stroke: "#f4f4f5", strokeWidth: 2 }}
+                  type="monotone"
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+          <ClickableLegend
+            items={legendItems}
+            onSelect={setSelectedLine}
+            selectedKey={selectedLine}
+          />
+        </>
       )}
     </section>
   );
@@ -225,9 +328,35 @@ function TotalComparisonChart({
   players: TotalComparisonPlayer[];
 }) {
   const data = useMemo(() => buildTotalComparisonData(players), [players]);
+  const [selectedLine, setSelectedLine] = useState<string | null>(null);
+  const selectionRef = useRef<HTMLElement>(null);
+  const legendItems = players.map((player, index) => ({
+    key: player.key,
+    label: player.username,
+    color: lineColors[index % lineColors.length],
+  }));
+
+  useEffect(() => {
+    if (!selectedLine) {
+      return;
+    }
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!selectionRef.current?.contains(event.target as Node)) {
+        setSelectedLine(null);
+      }
+    };
+
+    window.addEventListener("pointerdown", handlePointerDown);
+
+    return () => window.removeEventListener("pointerdown", handlePointerDown);
+  }, [selectedLine]);
 
   return (
-    <section className="min-w-0 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 p-4">
+    <section
+      className="min-w-0 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 p-4"
+      ref={selectionRef}
+    >
       <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h3 className="font-semibold text-white">Overall Comparison</h3>
@@ -245,69 +374,75 @@ function TotalComparisonChart({
           No players available for total comparison.
         </p>
       ) : (
-        <div className="mt-4 h-[420px] w-full max-w-full min-w-0 overflow-hidden">
-          <ResponsiveContainer
-            height="100%"
-            minHeight={1}
-            minWidth={1}
-            width="100%"
-          >
-            <LineChart
-              data={data}
-              margin={{ bottom: 92, left: 0, right: 12, top: 12 }}
+        <>
+          <div className="mt-4 h-[420px] w-full max-w-full min-w-0 overflow-hidden">
+            <ResponsiveContainer
+              height="100%"
+              minHeight={1}
+              minWidth={1}
+              width="100%"
             >
-              <CartesianGrid stroke="#27272a" strokeDasharray="3 3" />
-              <XAxis
-                angle={-40}
-                dataKey="name"
-                height={92}
-                interval={0}
-                stroke="#71717a"
-                tick={{
-                  fill: "#d4d4d8",
-                  fontSize: 10,
-                  textAnchor: "end",
-                }}
-                tickFormatter={formatAxisLabel}
-                type="category"
-              />
-              <YAxis
-                domain={[0, 100]}
-                stroke="#71717a"
-                tick={{ fill: "#a1a1aa", fontSize: 12 }}
-                type="number"
-                width={36}
-              />
-              <Tooltip
-                contentStyle={{
-                  background: "#09090b",
-                  border: "1px solid #27272a",
-                  borderRadius: 8,
-                  color: "#f4f4f5",
-                }}
-              />
-              <Legend
-                wrapperStyle={{
-                  color: "#d4d4d8",
-                  fontSize: 11,
-                  lineHeight: "18px",
-                }}
-              />
-              {players.map((player, index) => (
-                <Line
-                  animationDuration={700}
-                  dataKey={player.key}
-                  dot={false}
-                  key={player.key}
-                  name={player.username}
-                  stroke={lineColors[index % lineColors.length]}
-                  strokeWidth={2}
-                  type="monotone"
+              <LineChart
+                data={data}
+                margin={{ bottom: 92, left: 0, right: 12, top: 12 }}
+              >
+                <CartesianGrid
+                  stroke="#27272a"
+                  strokeDasharray="3 3"
+                  vertical={false}
                 />
-              ))}
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+                <XAxis
+                  angle={-40}
+                  dataKey="name"
+                  height={92}
+                  interval={0}
+                  stroke="#71717a"
+                  tick={{
+                    fill: "#d4d4d8",
+                    fontSize: 10,
+                    textAnchor: "end",
+                  }}
+                  tickFormatter={formatAxisLabel}
+                  type="category"
+                />
+                <YAxis
+                  domain={[0, 100]}
+                  stroke="#71717a"
+                  tick={{ fill: "#a1a1aa", fontSize: 12 }}
+                  ticks={yAxisTicks}
+                  type="number"
+                  width={36}
+                />
+                <Tooltip
+                  contentStyle={{
+                    background: "#09090b",
+                    border: "1px solid #27272a",
+                    borderRadius: 8,
+                    color: "#f4f4f5",
+                  }}
+                />
+                {players.map((player, index) => (
+                  <Line
+                    animationDuration={700}
+                    dataKey={player.key}
+                    dot={false}
+                    key={player.key}
+                    name={player.username}
+                    stroke={lineColors[index % lineColors.length]}
+                    strokeOpacity={getLineOpacity(player.key, selectedLine)}
+                    strokeWidth={getLineWidth(player.key, selectedLine)}
+                    type="monotone"
+                  />
+                ))}
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+          <ClickableLegend
+            items={legendItems}
+            onSelect={setSelectedLine}
+            selectedKey={selectedLine}
+          />
+        </>
       )}
     </section>
   );
