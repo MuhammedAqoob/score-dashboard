@@ -39,14 +39,6 @@ const platformBenefits = [
   "Visualize long-term trends",
 ];
 
-const workflowSteps = [
-  "Copy the official prompt",
-  "Run it in your preferred AI",
-  "Paste the result",
-  "Receive validated analytics",
-  "Compare yourself with others",
-];
-
 export default function Home() {
   const { profile, loading: authLoading } = useAuth();
   const { prompt, loading: promptLoading, error: promptError } = useActivePrompt();
@@ -205,56 +197,35 @@ export default function Home() {
         </header>
 
         <section className="min-w-0 overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900 p-4 shadow-sm shadow-black/20 sm:p-6">
-          <div className="grid min-w-0 gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-start">
-            <div className="min-w-0">
-              <p className="text-sm font-medium text-emerald-400">
-                Skill and cognitive profile tracker
-              </p>
-              <h2 className="mt-2 max-w-2xl break-words text-2xl font-bold text-white sm:text-3xl">
-                Measure how your thinking, research, communication, and
-                execution skills change over time.
-              </h2>
-              <p className="mt-3 max-w-3xl text-sm leading-6 text-zinc-400">
-                Score Board uses an external AI analysis workflow, then validates
-                the structured scorecard before it enters your dashboard. Each
-                accepted result becomes part of a long-term performance history
-                across multiple work-related skill categories.
-              </p>
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-emerald-400">
+              Skill and cognitive profile tracker
+            </p>
+            <h2 className="mt-2 max-w-2xl break-words text-2xl font-bold text-white sm:text-3xl">
+              Measure how your thinking, research, communication, and execution
+              skills change over time.
+            </h2>
+            <p className="mt-3 max-w-3xl text-sm leading-6 text-zinc-400">
+              Score Board uses an external AI analysis workflow, then validates
+              the structured scorecard before it enters your dashboard. Each
+              accepted result becomes part of a long-term performance history
+              across multiple work-related skill categories.
+            </p>
 
-              <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                {platformBenefits.map((benefit) => (
-                  <div
-                    className="flex min-w-0 items-center gap-3 rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-3"
-                    key={benefit}
-                  >
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-emerald-900/60 bg-emerald-950/40 text-xs font-bold text-emerald-300">
-                      +
-                    </span>
-                    <span className="min-w-0 break-words text-sm font-medium text-zinc-200">
-                      {benefit}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="min-w-0 rounded-xl border border-zinc-800 bg-zinc-950 p-4">
-              <p className="text-sm font-semibold text-white">How it works</p>
-              <div className="mt-4 grid gap-3">
-                {workflowSteps.map((step, index) => (
-                  <div
-                    className="flex min-w-0 items-start gap-3 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-3"
-                    key={step}
-                  >
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-xs font-bold text-zinc-950">
-                      {index + 1}
-                    </span>
-                    <p className="min-w-0 break-words text-sm text-zinc-300">
-                      {step}
-                    </p>
-                  </div>
-                ))}
-              </div>
+            <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {platformBenefits.map((benefit) => (
+                <div
+                  className="flex min-w-0 items-center gap-3 rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-3"
+                  key={benefit}
+                >
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-emerald-900/60 bg-emerald-950/40 text-xs font-bold text-emerald-300">
+                    +
+                  </span>
+                  <span className="min-w-0 break-words text-sm font-medium text-zinc-200">
+                    {benefit}
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
         </section>

@@ -14,16 +14,32 @@ export function AppNav() {
   const menuRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const userStatus = getEffectiveUserStatus(profile);
-  const navLinks = [
-    { href: "/", label: "Home" },
-    { href: "/leaderboard", label: "Leaderboard" },
-    { href: "/dashboard", label: "Dashboard" },
-  ];
+  const navLinks = useMemo(
+    () => [
+      { href: "/", label: "Home", match: ["/"] },
+      { href: "/leaderboard", label: "Leaderboard", match: ["/leaderboard"] },
+      {
+        href: isAdmin ? "/admin" : "/dashboard",
+        label: "Dashboard",
+        match: ["/dashboard", "/admin"],
+      },
+    ],
+    [isAdmin],
+  );
 
-  const activeLinkClass = (href: string) =>
-    pathname === href
-      ? "bg-zinc-800 text-white shadow-sm shadow-black/30 ring-1 ring-zinc-700/70"
-      : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100";
+  const activeNavIndex = Math.max(
+    navLinks.findIndex((link) => link.match.includes(pathname)),
+    0,
+  );
+
+  const navIndicatorStyle = {
+    transform: `translateX(${activeNavIndex * 100}%)`,
+  };
+
+  const activeLinkClass = (isActive: boolean) =>
+    isActive
+      ? "text-white"
+      : "text-zinc-400 hover:text-zinc-100";
 
   const initials = useMemo(() => {
     if (isAdmin) {
@@ -73,10 +89,15 @@ export function AppNav() {
           Score Board
         </Link>
 
-        <div className="hidden items-center gap-1 rounded-full border border-zinc-800 bg-zinc-900/70 p-1 text-sm shadow-sm shadow-black/20 md:flex">
-          {navLinks.map((link) => (
+        <div className="relative hidden w-[360px] grid-cols-3 rounded-full border border-zinc-800 bg-zinc-900/70 p-1 text-sm shadow-sm shadow-black/20 md:grid">
+          <span
+            aria-hidden="true"
+            className="absolute left-1 top-1 h-[calc(100%-0.5rem)] w-[calc((100%-0.5rem)/3)] rounded-full bg-zinc-800 shadow-sm shadow-black/30 ring-1 ring-zinc-700/70 transition-transform duration-300 ease-out"
+            style={navIndicatorStyle}
+          />
+          {navLinks.map((link, index) => (
             <Link
-              className={`rounded-full px-4 py-2 transition-all duration-200 ease-out hover:-translate-y-0.5 ${activeLinkClass(link.href)}`}
+              className={`relative z-10 rounded-full px-4 py-2 text-center transition-colors duration-200 ${activeLinkClass(index === activeNavIndex)}`}
               href={link.href}
               key={link.href}
             >
@@ -116,16 +137,6 @@ export function AppNav() {
                     )}
                   </div>
 
-                  {isAdmin && (
-                    <Link
-                      className="block px-4 py-3 text-sm text-zinc-200 transition hover:bg-zinc-800"
-                      href="/admin"
-                    >
-                      Admin Panel
-                    </Link>
-                  )}
-
-                  <div className="border-t border-zinc-800" />
                   <button
                     className="w-full cursor-pointer px-4 py-3 text-left text-sm text-zinc-300 transition hover:bg-red-950/40 hover:text-red-200 active:bg-red-950/60"
                     onClick={handleLogout}
@@ -147,10 +158,15 @@ export function AppNav() {
         </div>
       </div>
 
-      <div className="mx-auto mt-3 flex w-full max-w-6xl justify-center gap-1 overflow-x-auto rounded-full border border-zinc-800 bg-zinc-900/60 p-1 text-sm md:hidden">
-        {navLinks.map((link) => (
+      <div className="relative mx-auto mt-3 grid w-full max-w-md grid-cols-3 rounded-full border border-zinc-800 bg-zinc-900/60 p-1 text-sm md:hidden">
+        <span
+          aria-hidden="true"
+          className="absolute left-1 top-1 h-[calc(100%-0.5rem)] w-[calc((100%-0.5rem)/3)] rounded-full bg-zinc-800 shadow-sm shadow-black/30 ring-1 ring-zinc-700/70 transition-transform duration-300 ease-out"
+          style={navIndicatorStyle}
+        />
+        {navLinks.map((link, index) => (
           <Link
-            className={`shrink-0 rounded-full px-3 py-2 transition-all duration-200 ease-out ${activeLinkClass(link.href)}`}
+            className={`relative z-10 min-w-0 rounded-full px-2 py-2 text-center text-xs transition-colors duration-200 min-[380px]:text-sm ${activeLinkClass(index === activeNavIndex)}`}
             href={link.href}
             key={link.href}
           >
