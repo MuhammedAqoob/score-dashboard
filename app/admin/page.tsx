@@ -15,6 +15,7 @@ import { useAdminScores } from "@/hooks/useAdminScores";
 import { useAdminStats } from "@/hooks/useAdminStats";
 import { useAdminSubmissions } from "@/hooks/useAdminSubmissions";
 import { useAdminUsers } from "@/hooks/useAdminUsers";
+import { useValidationEvents } from "@/hooks/useValidationEvents";
 import {
   editSubmissionOverallScore,
   setSubmissionDeleted,
@@ -85,6 +86,10 @@ function AdminDashboardContent() {
     error: submissionsError,
   } = useAdminSubmissions();
   const { logs, loading: logsLoading, error: logsError } = useAdminLogs();
+  const {
+    events: validationEvents,
+    error: validationEventsError,
+  } = useValidationEvents();
   const [title, setTitle] = useState<string | null>(null);
   const [content, setContent] = useState<string | null>(null);
   const [version, setVersion] = useState<number | null>(null);
@@ -297,7 +302,16 @@ function AdminDashboardContent() {
           <MetricCard label="Today's Average Score" value={statsLoading ? "..." : `${stats?.todaysAverageScore ?? 0}/100`} />
         </div>
 
-        <AdminAnalyticsOverview submissions={submissions} />
+        {validationEventsError && (
+          <p className="text-sm text-amber-200">
+            Validation event analytics unavailable: {validationEventsError}
+          </p>
+        )}
+
+        <AdminAnalyticsOverview
+          submissions={submissions}
+          validationEvents={validationEvents}
+        />
 
         <SectionShell title="Moderation Queue">
           <div className="mt-4">
@@ -326,43 +340,41 @@ function AdminDashboardContent() {
             <p className="mt-4 text-sm text-zinc-400">No users found.</p>
           )}
           {!usersLoading && !usersError && filteredUsers.length > 0 && (
-            <div className="mt-4 max-w-full overflow-x-auto rounded-lg border border-zinc-800">
-              <table className="w-full min-w-[980px] text-left text-sm">
-                <thead className="sticky top-0 bg-zinc-950 text-zinc-400">
-                  <tr>
-                    <th className="border-b border-zinc-800 py-2">Username</th>
-                    <th className="border-b border-zinc-800 py-2">Status</th>
-                    <th className="border-b border-zinc-800 py-2">Average</th>
-                    <th className="border-b border-zinc-800 py-2">Ban Until</th>
-                    <th className="border-b border-zinc-800 py-2">Reason</th>
-                    <th className="border-b border-zinc-800 py-2">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredUsers.map((user) => {
-                    const userScore = scores[user.username];
-                    const status = getEffectiveUserStatus(user);
-                    const draft = banDrafts[user.username] ?? {
-                      until: toLocalInputValue(user.bannedUntil),
-                      reason: user.banReason ?? "",
-                    };
+            <>
+              <div className="mt-4 grid gap-3 md:hidden">
+                {filteredUsers.map((user) => {
+                  const userScore = scores[user.username];
+                  const status = getEffectiveUserStatus(user);
+                  const draft = banDrafts[user.username] ?? {
+                    until: toLocalInputValue(user.bannedUntil),
+                    reason: user.banReason ?? "",
+                  };
 
-                    return (
-                      <tr key={user.id}>
-                        <td className="border-b border-zinc-800 py-3 font-medium text-white">
-                          {user.username}
-                        </td>
-                        <td className="border-b border-zinc-800 py-3">
-                          <StatusBadge status={status} />
-                        </td>
-                        <td className="border-b border-zinc-800 py-3">
-                          {scoresLoading
-                            ? "..."
-                            : `${userScore?.averageScore ?? 0}/100 (${userScore?.submissionCount ?? 0})`}
-                        </td>
-                        <td className="border-b border-zinc-800 py-3">
+                  return (
+                    <article
+                      className="min-w-0 rounded-xl border border-zinc-800 bg-zinc-950 p-4"
+                      key={user.id}
+                    >
+                      <div className="flex min-w-0 items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <h4 className="break-words font-semibold text-white">
+                            {user.username}
+                          </h4>
+                          <p className="mt-1 text-xs text-zinc-500">
+                            Average:{" "}
+                            {scoresLoading
+                              ? "..."
+                              : `${userScore?.averageScore ?? 0}/100 (${userScore?.submissionCount ?? 0})`}
+                          </p>
+                        </div>
+                        <StatusBadge status={status} />
+                      </div>
+
+                      <div className="mt-4 grid gap-3">
+                        <label className="text-xs font-medium text-zinc-400">
+                          Ban until
                           <input
-                            className="w-48 rounded-md border border-zinc-700 bg-zinc-950 px-2 py-1 text-zinc-50"
+                            className="mt-1 w-full min-w-0 rounded-md border border-zinc-700 bg-zinc-900 px-2 py-2 text-sm text-zinc-50"
                             onChange={(event) =>
                               setBanDrafts({
                                 ...banDrafts,
@@ -375,10 +387,11 @@ function AdminDashboardContent() {
                             type="datetime-local"
                             value={draft.until}
                           />
-                        </td>
-                        <td className="border-b border-zinc-800 py-3">
+                        </label>
+                        <label className="text-xs font-medium text-zinc-400">
+                          Ban reason
                           <input
-                            className="w-56 rounded-md border border-zinc-700 bg-zinc-950 px-2 py-1 text-zinc-50"
+                            className="mt-1 w-full min-w-0 rounded-md border border-zinc-700 bg-zinc-900 px-2 py-2 text-sm text-zinc-50"
                             onChange={(event) =>
                               setBanDrafts({
                                 ...banDrafts,
@@ -391,29 +404,117 @@ function AdminDashboardContent() {
                             placeholder="Optional reason"
                             value={draft.reason}
                           />
-                        </td>
-                        <td className="border-b border-zinc-800 py-3">
-                          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-                            <button className="rounded-md bg-emerald-500 px-3 py-1 font-semibold text-zinc-950 hover:bg-emerald-400" onClick={() => handleUserStatus(user, "approved")} type="button">
-                              Approve
-                            </button>
-                            <button className="rounded-md border border-amber-700/60 px-3 py-1 font-semibold text-amber-100 hover:bg-amber-950/30" onClick={() => handleUserStatus(user, "revoked")} type="button">
-                              Revoke
-                            </button>
-                            <button className="rounded-md bg-red-600 px-3 py-1 font-semibold text-white hover:bg-red-500" onClick={() => handleBanUser(user)} type="button">
-                              Ban
-                            </button>
-                            <button className="rounded-md border border-zinc-700 px-3 py-1 font-semibold text-zinc-200 hover:bg-zinc-800" onClick={() => handleUnbanUser(user)} type="button">
-                              Unban
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                        </label>
+                      </div>
+
+                      <div className="mt-4 grid grid-cols-2 gap-2">
+                        <button className="rounded-md bg-emerald-500 px-3 py-2 text-sm font-semibold text-zinc-950 hover:bg-emerald-400" onClick={() => handleUserStatus(user, "approved")} type="button">
+                          Approve
+                        </button>
+                        <button className="rounded-md border border-amber-700/60 px-3 py-2 text-sm font-semibold text-amber-100 hover:bg-amber-950/30" onClick={() => handleUserStatus(user, "revoked")} type="button">
+                          Revoke
+                        </button>
+                        <button className="rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white hover:bg-red-500" onClick={() => handleBanUser(user)} type="button">
+                          Ban
+                        </button>
+                        <button className="rounded-md border border-zinc-700 px-3 py-2 text-sm font-semibold text-zinc-200 hover:bg-zinc-800" onClick={() => handleUnbanUser(user)} type="button">
+                          Unban
+                        </button>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+
+              <div className="mt-4 hidden max-w-full overflow-x-auto rounded-lg border border-zinc-800 md:block">
+                <table className="w-full min-w-[980px] text-left text-sm">
+                  <thead className="sticky top-0 bg-zinc-950 text-zinc-400">
+                    <tr>
+                      <th className="border-b border-zinc-800 py-2">Username</th>
+                      <th className="border-b border-zinc-800 py-2">Status</th>
+                      <th className="border-b border-zinc-800 py-2">Average</th>
+                      <th className="border-b border-zinc-800 py-2">Ban Until</th>
+                      <th className="border-b border-zinc-800 py-2">Reason</th>
+                      <th className="border-b border-zinc-800 py-2">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredUsers.map((user) => {
+                      const userScore = scores[user.username];
+                      const status = getEffectiveUserStatus(user);
+                      const draft = banDrafts[user.username] ?? {
+                        until: toLocalInputValue(user.bannedUntil),
+                        reason: user.banReason ?? "",
+                      };
+
+                      return (
+                        <tr key={user.id}>
+                          <td className="border-b border-zinc-800 py-3 font-medium text-white">
+                            {user.username}
+                          </td>
+                          <td className="border-b border-zinc-800 py-3">
+                            <StatusBadge status={status} />
+                          </td>
+                          <td className="border-b border-zinc-800 py-3">
+                            {scoresLoading
+                              ? "..."
+                              : `${userScore?.averageScore ?? 0}/100 (${userScore?.submissionCount ?? 0})`}
+                          </td>
+                          <td className="border-b border-zinc-800 py-3">
+                            <input
+                              className="w-48 rounded-md border border-zinc-700 bg-zinc-950 px-2 py-1 text-zinc-50"
+                              onChange={(event) =>
+                                setBanDrafts({
+                                  ...banDrafts,
+                                  [user.username]: {
+                                    ...draft,
+                                    until: event.target.value,
+                                  },
+                                })
+                              }
+                              type="datetime-local"
+                              value={draft.until}
+                            />
+                          </td>
+                          <td className="border-b border-zinc-800 py-3">
+                            <input
+                              className="w-56 rounded-md border border-zinc-700 bg-zinc-950 px-2 py-1 text-zinc-50"
+                              onChange={(event) =>
+                                setBanDrafts({
+                                  ...banDrafts,
+                                  [user.username]: {
+                                    ...draft,
+                                    reason: event.target.value,
+                                  },
+                                })
+                              }
+                              placeholder="Optional reason"
+                              value={draft.reason}
+                            />
+                          </td>
+                          <td className="border-b border-zinc-800 py-3">
+                            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                              <button className="rounded-md bg-emerald-500 px-3 py-1 font-semibold text-zinc-950 hover:bg-emerald-400" onClick={() => handleUserStatus(user, "approved")} type="button">
+                                Approve
+                              </button>
+                              <button className="rounded-md border border-amber-700/60 px-3 py-1 font-semibold text-amber-100 hover:bg-amber-950/30" onClick={() => handleUserStatus(user, "revoked")} type="button">
+                                Revoke
+                              </button>
+                              <button className="rounded-md bg-red-600 px-3 py-1 font-semibold text-white hover:bg-red-500" onClick={() => handleBanUser(user)} type="button">
+                                Ban
+                              </button>
+                              <button className="rounded-md border border-zinc-700 px-3 py-1 font-semibold text-zinc-200 hover:bg-zinc-800" onClick={() => handleUnbanUser(user)} type="button">
+                                Unban
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </SectionShell>
 
@@ -434,31 +535,37 @@ function AdminDashboardContent() {
             <p className="mt-4 text-sm text-zinc-400">No submissions found.</p>
           )}
           {!submissionsLoading && !submissionsError && filteredSubmissions.length > 0 && (
-            <div className="mt-4 max-w-full overflow-x-auto rounded-lg border border-zinc-800">
-              <table className="w-full min-w-[980px] text-left text-sm">
-                <thead className="sticky top-0 bg-zinc-950 text-zinc-400">
-                  <tr>
-                    <th className="border-b border-zinc-800 py-2">User</th>
-                    <th className="border-b border-zinc-800 py-2">Day</th>
-                    <th className="border-b border-zinc-800 py-2">Score</th>
-                    <th className="border-b border-zinc-800 py-2">Status</th>
-                    <th className="border-b border-zinc-800 py-2">Submitted</th>
-                    <th className="border-b border-zinc-800 py-2">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredSubmissions.map((submission) => {
-                    const isEditing = editingSubmissionId === submission.id;
-                    const status = getSubmissionStatus(submission);
+            <>
+              <div className="mt-4 grid gap-3 md:hidden">
+                {filteredSubmissions.map((submission) => {
+                  const isEditing = editingSubmissionId === submission.id;
+                  const status = getSubmissionStatus(submission);
 
-                    return (
-                      <tr className={status === "deleted" ? "opacity-50" : ""} key={submission.id}>
-                        <td className="border-b border-zinc-800 py-3 font-medium text-white">{submission.username}</td>
-                        <td className="border-b border-zinc-800 py-3">{submission.dayKey}</td>
-                        <td className="border-b border-zinc-800 py-3">
+                  return (
+                    <article
+                      className={`min-w-0 rounded-xl border border-zinc-800 bg-zinc-950 p-4 ${
+                        status === "deleted" ? "opacity-60" : ""
+                      }`}
+                      key={submission.id}
+                    >
+                      <div className="flex min-w-0 items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <h4 className="break-words font-semibold text-white">
+                            {submission.username}
+                          </h4>
+                          <p className="mt-1 text-xs text-zinc-500">
+                            {submission.dayKey} - {formatDate(submission.submittedAt)}
+                          </p>
+                        </div>
+                        <StatusBadge status={status} />
+                      </div>
+
+                      <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                        <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-3">
+                          <p className="text-xs text-zinc-500">Score</p>
                           {isEditing ? (
                             <input
-                              className="w-24 rounded-md border border-zinc-700 bg-zinc-950 px-2 py-1 text-zinc-50"
+                              className="mt-1 w-full rounded-md border border-zinc-700 bg-zinc-950 px-2 py-1 text-zinc-50"
                               max={100}
                               min={0}
                               onChange={(event) => setScoreDraft(event.target.value)}
@@ -466,54 +573,139 @@ function AdminDashboardContent() {
                               value={scoreDraft}
                             />
                           ) : (
-                            <span>
-                              {submission.calculatedScore}/100{" "}
-                              {submission.editedByAdmin && (
-                                <span className="text-xs text-amber-300">edited</span>
-                              )}
-                            </span>
+                            <p className="mt-1 font-bold text-emerald-400">
+                              {submission.calculatedScore}/100
+                            </p>
                           )}
-                        </td>
-                        <td className="border-b border-zinc-800 py-3">
-                          <StatusBadge status={status} />
-                        </td>
-                        <td className="border-b border-zinc-800 py-3">{formatDate(submission.submittedAt)}</td>
-                        <td className="border-b border-zinc-800 py-3">
-                          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                        </div>
+                        <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-3">
+                          <p className="text-xs text-zinc-500">Validation</p>
+                          <p className="mt-1 font-semibold text-zinc-100">
+                            {submission.validated ? "Validated" : "Failed"}
+                          </p>
+                        </div>
+                      </div>
+
+                      {submission.editedByAdmin && !isEditing && (
+                        <p className="mt-3 text-xs text-amber-300">
+                          Edited by admin
+                        </p>
+                      )}
+
+                      <div className="mt-4 grid grid-cols-2 gap-2">
+                        {isEditing ? (
+                          <>
+                            <button className="rounded-md bg-emerald-500 px-3 py-2 text-sm font-semibold text-zinc-950 hover:bg-emerald-400" onClick={() => handleEditScore(submission)} type="button">
+                              Save
+                            </button>
+                            <button className="rounded-md border border-zinc-700 px-3 py-2 text-sm font-semibold text-zinc-200 hover:bg-zinc-800" onClick={() => setEditingSubmissionId("")} type="button">
+                              Cancel
+                            </button>
+                          </>
+                        ) : (
+                          <button className="rounded-md border border-sky-800/70 px-3 py-2 text-sm font-semibold text-sky-100 hover:bg-sky-950/30" onClick={() => {
+                            setEditingSubmissionId(submission.id ?? "");
+                            setScoreDraft(String(submission.calculatedScore));
+                          }} type="button">
+                            Edit Score
+                          </button>
+                        )}
+                        {status === "deleted" ? (
+                          <button className="rounded-md border border-zinc-700 px-3 py-2 text-sm font-semibold text-zinc-200 hover:bg-zinc-800" onClick={() => handleDeleteRestore(submission, false)} type="button">
+                            Restore
+                          </button>
+                        ) : (
+                          <button className="rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white hover:bg-red-500" onClick={() => handleDeleteRestore(submission, true)} type="button">
+                            Delete
+                          </button>
+                        )}
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+
+              <div className="mt-4 hidden max-w-full overflow-x-auto rounded-lg border border-zinc-800 md:block">
+                <table className="w-full min-w-[980px] text-left text-sm">
+                  <thead className="sticky top-0 bg-zinc-950 text-zinc-400">
+                    <tr>
+                      <th className="border-b border-zinc-800 py-2">User</th>
+                      <th className="border-b border-zinc-800 py-2">Day</th>
+                      <th className="border-b border-zinc-800 py-2">Score</th>
+                      <th className="border-b border-zinc-800 py-2">Status</th>
+                      <th className="border-b border-zinc-800 py-2">Submitted</th>
+                      <th className="border-b border-zinc-800 py-2">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredSubmissions.map((submission) => {
+                      const isEditing = editingSubmissionId === submission.id;
+                      const status = getSubmissionStatus(submission);
+
+                      return (
+                        <tr className={status === "deleted" ? "opacity-50" : ""} key={submission.id}>
+                          <td className="border-b border-zinc-800 py-3 font-medium text-white">{submission.username}</td>
+                          <td className="border-b border-zinc-800 py-3">{submission.dayKey}</td>
+                          <td className="border-b border-zinc-800 py-3">
                             {isEditing ? (
-                              <>
-                                <button className="rounded-md bg-emerald-500 px-3 py-1 font-semibold text-zinc-950 hover:bg-emerald-400" onClick={() => handleEditScore(submission)} type="button">
-                                  Save
-                                </button>
-                                <button className="rounded-md border border-zinc-700 px-3 py-1 font-semibold text-zinc-200 hover:bg-zinc-800" onClick={() => setEditingSubmissionId("")} type="button">
-                                  Cancel
-                                </button>
-                              </>
+                              <input
+                                className="w-24 rounded-md border border-zinc-700 bg-zinc-950 px-2 py-1 text-zinc-50"
+                                max={100}
+                                min={0}
+                                onChange={(event) => setScoreDraft(event.target.value)}
+                                type="number"
+                                value={scoreDraft}
+                              />
                             ) : (
-                              <button className="rounded-md border border-sky-800/70 px-3 py-1 font-semibold text-sky-100 hover:bg-sky-950/30" onClick={() => {
-                                setEditingSubmissionId(submission.id ?? "");
-                                setScoreDraft(String(submission.calculatedScore));
-                              }} type="button">
-                                Edit Score
-                              </button>
+                              <span>
+                                {submission.calculatedScore}/100{" "}
+                                {submission.editedByAdmin && (
+                                  <span className="text-xs text-amber-300">edited</span>
+                                )}
+                              </span>
                             )}
-                            {status === "deleted" ? (
-                              <button className="rounded-md border border-zinc-700 px-3 py-1 font-semibold text-zinc-200 hover:bg-zinc-800" onClick={() => handleDeleteRestore(submission, false)} type="button">
-                                Restore
-                              </button>
-                            ) : (
-                              <button className="rounded-md bg-red-600 px-3 py-1 font-semibold text-white hover:bg-red-500" onClick={() => handleDeleteRestore(submission, true)} type="button">
-                                Delete
-                              </button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                          </td>
+                          <td className="border-b border-zinc-800 py-3">
+                            <StatusBadge status={status} />
+                          </td>
+                          <td className="border-b border-zinc-800 py-3">{formatDate(submission.submittedAt)}</td>
+                          <td className="border-b border-zinc-800 py-3">
+                            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                              {isEditing ? (
+                                <>
+                                  <button className="rounded-md bg-emerald-500 px-3 py-1 font-semibold text-zinc-950 hover:bg-emerald-400" onClick={() => handleEditScore(submission)} type="button">
+                                    Save
+                                  </button>
+                                  <button className="rounded-md border border-zinc-700 px-3 py-1 font-semibold text-zinc-200 hover:bg-zinc-800" onClick={() => setEditingSubmissionId("")} type="button">
+                                    Cancel
+                                  </button>
+                                </>
+                              ) : (
+                                <button className="rounded-md border border-sky-800/70 px-3 py-1 font-semibold text-sky-100 hover:bg-sky-950/30" onClick={() => {
+                                  setEditingSubmissionId(submission.id ?? "");
+                                  setScoreDraft(String(submission.calculatedScore));
+                                }} type="button">
+                                  Edit Score
+                                </button>
+                              )}
+                              {status === "deleted" ? (
+                                <button className="rounded-md border border-zinc-700 px-3 py-1 font-semibold text-zinc-200 hover:bg-zinc-800" onClick={() => handleDeleteRestore(submission, false)} type="button">
+                                  Restore
+                                </button>
+                              ) : (
+                                <button className="rounded-md bg-red-600 px-3 py-1 font-semibold text-white hover:bg-red-500" onClick={() => handleDeleteRestore(submission, true)} type="button">
+                                  Delete
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </SectionShell>
 

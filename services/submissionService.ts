@@ -7,7 +7,10 @@ import {
   setDoc,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { analyzeResponse } from "@/services/analysisService";
+import {
+  ScoreValidationError,
+  analyzeResponse,
+} from "@/services/analysisService";
 import { getCurrentDayKey } from "@/services/dayKey";
 import {
   getEffectiveUserStatus,
@@ -15,6 +18,7 @@ import {
 } from "@/services/moderationUtils";
 import { fetchActivePrompt } from "@/services/promptService";
 import { getUserProfileByUsername } from "@/services/userService";
+import { createValidationEvent } from "@/services/validationEventService";
 import { CreateSubmissionInput } from "@/types/submission";
 
 const SUBMISSIONS_COLLECTION = "submissions";
@@ -92,7 +96,31 @@ export async function createSubmission(input: CreateSubmissionInput) {
     throw new Error("You already submitted today. Come back tomorrow.");
   }
 
-  const analysis = analyzeResponse(responseText);
+  let analysis: ReturnType<typeof analyzeResponse>;
+
+  try {
+    analysis = analyzeResponse(responseText);
+    await createValidationEvent({
+      username: input.username,
+      promptId: activePrompt.id,
+      promptVersion: activePrompt.version,
+      dayKey,
+      outcome: "success",
+    });
+  } catch (error) {
+    if (error instanceof ScoreValidationError) {
+      await createValidationEvent({
+        username: input.username,
+        promptId: activePrompt.id,
+        promptVersion: activePrompt.version,
+        dayKey,
+        outcome: "failure",
+        reason: error.message,
+      });
+    }
+
+    throw error;
+  }
 
   await setDoc(submissionRef, {
     username: input.username,

@@ -16,9 +16,11 @@ import {
 import { ScoreTrendChart } from "@/components/analytics/ScoreTrendChart";
 import { buildPlatformAnalytics } from "@/services/analyticsService";
 import { Submission } from "@/types/submission";
+import { ValidationEvent } from "@/types/validationEvent";
 
 type AdminAnalyticsOverviewProps = {
   submissions: Submission[];
+  validationEvents?: ValidationEvent[];
 };
 
 const ratioColors = ["#22c55e", "#ef4444"];
@@ -43,10 +45,11 @@ function InsightCard({
 
 export function AdminAnalyticsOverview({
   submissions,
+  validationEvents = [],
 }: AdminAnalyticsOverviewProps) {
   const analytics = useMemo(
-    () => buildPlatformAnalytics(submissions),
-    [submissions],
+    () => buildPlatformAnalytics(submissions, validationEvents),
+    [submissions, validationEvents],
   );
 
   return (

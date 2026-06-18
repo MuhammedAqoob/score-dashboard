@@ -87,7 +87,12 @@ function buildLeaderboard(
       topScore: scoreData.topScore,
       dateAchieved: scoreData.dateAchieved,
     }))
-    .sort((first, second) => second.averageScore - first.averageScore)
+    .sort(
+      (first, second) =>
+        second.topScore - first.topScore ||
+        second.averageScore - first.averageScore ||
+        first.username.localeCompare(second.username),
+    )
     .slice(0, limitCount);
 }
 

@@ -14,10 +14,15 @@ export function AppNav() {
   const menuRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const userStatus = getEffectiveUserStatus(profile);
+  const navLinks = [
+    { href: "/", label: "Home" },
+    { href: "/leaderboard", label: "Leaderboard" },
+    { href: "/dashboard", label: "Dashboard" },
+  ];
 
   const activeLinkClass = (href: string) =>
     pathname === href
-      ? "bg-zinc-800 text-white"
+      ? "bg-zinc-800 text-white shadow-sm shadow-black/30 ring-1 ring-zinc-700/70"
       : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100";
 
   const initials = useMemo(() => {
@@ -68,22 +73,16 @@ export function AppNav() {
           Score Board
         </Link>
 
-        <div className="hidden items-center gap-2 rounded-full border border-zinc-800 bg-zinc-900/70 p-1 text-sm md:flex">
-          <Link className={`rounded-full px-4 py-2 ${activeLinkClass("/")}`} href="/">
-            Home
-          </Link>
-          <Link
-            className={`rounded-full px-4 py-2 ${activeLinkClass("/dashboard")}`}
-            href="/dashboard"
-          >
-            Dashboard
-          </Link>
-          <Link
-            className={`rounded-full px-4 py-2 ${activeLinkClass("/leaderboard")}`}
-            href="/leaderboard"
-          >
-            Leaderboard
-          </Link>
+        <div className="hidden items-center gap-1 rounded-full border border-zinc-800 bg-zinc-900/70 p-1 text-sm shadow-sm shadow-black/20 md:flex">
+          {navLinks.map((link) => (
+            <Link
+              className={`rounded-full px-4 py-2 transition-all duration-200 ease-out hover:-translate-y-0.5 ${activeLinkClass(link.href)}`}
+              href={link.href}
+              key={link.href}
+            >
+              {link.label}
+            </Link>
+          ))}
         </div>
 
         <div className="flex justify-end">
@@ -148,22 +147,16 @@ export function AppNav() {
         </div>
       </div>
 
-      <div className="mx-auto mt-3 flex w-full max-w-6xl justify-center gap-2 overflow-x-auto text-sm md:hidden">
-        <Link className={`rounded-full px-4 py-2 ${activeLinkClass("/")}`} href="/">
-          Home
-        </Link>
-        <Link
-          className={`rounded-full px-4 py-2 ${activeLinkClass("/dashboard")}`}
-          href="/dashboard"
-        >
-          Dashboard
-        </Link>
-        <Link
-          className={`rounded-full px-4 py-2 ${activeLinkClass("/leaderboard")}`}
-          href="/leaderboard"
-        >
-          Leaderboard
-        </Link>
+      <div className="mx-auto mt-3 flex w-full max-w-6xl justify-center gap-1 overflow-x-auto rounded-full border border-zinc-800 bg-zinc-900/60 p-1 text-sm md:hidden">
+        {navLinks.map((link) => (
+          <Link
+            className={`shrink-0 rounded-full px-3 py-2 transition-all duration-200 ease-out ${activeLinkClass(link.href)}`}
+            href={link.href}
+            key={link.href}
+          >
+            {link.label}
+          </Link>
+        ))}
       </div>
     </nav>
   );

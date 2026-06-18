@@ -5,6 +5,7 @@ import {
 } from "@/services/moderationUtils";
 import { ScoreKey, ScoreMap } from "@/types/score";
 import { Submission } from "@/types/submission";
+import { ValidationEvent } from "@/types/validationEvent";
 
 export type CategoryChartItem = {
   key: ScoreKey;
@@ -221,6 +222,7 @@ export function buildScoreTrendData(submissions: Submission[]): TrendPoint[] {
 
 export function buildPlatformAnalytics(
   submissions: Submission[],
+  validationEvents: ValidationEvent[] = [],
 ): PlatformAnalytics {
   const activeSubmissions = submissions.filter(
     (submission) => (submission.status ?? "active") === "active",
@@ -250,10 +252,21 @@ export function buildPlatformAnalytics(
     });
   });
 
-  const validatedCount = activeSubmissions.filter((submission) =>
-    Boolean(submission.validated),
+  const validationSuccessCount = validationEvents.filter(
+    (event) => event.outcome === "success",
   ).length;
-  const failedCount = Math.max(activeSubmissions.length - validatedCount, 0);
+  const validationFailureCount = validationEvents.filter(
+    (event) => event.outcome === "failure",
+  ).length;
+  const hasValidationEvents =
+    validationSuccessCount > 0 || validationFailureCount > 0;
+  const validatedCount = hasValidationEvents
+    ? validationSuccessCount
+    : activeSubmissions.filter((submission) => Boolean(submission.validated))
+        .length;
+  const failedCount = hasValidationEvents
+    ? validationFailureCount
+    : Math.max(activeSubmissions.length - validatedCount, 0);
 
   return {
     strongestCategory: sortedCategoryItems[0] ?? null,

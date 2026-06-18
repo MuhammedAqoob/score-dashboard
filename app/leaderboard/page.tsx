@@ -63,7 +63,8 @@ export default function LeaderboardPage() {
               Top Performers
             </h1>
             <p className="mt-3 text-sm text-zinc-400">
-              {entries.length} active players ranked by average validated score.
+              {entries.length} active players ranked by highest validated score.
+              Average score remains visible for long-term context.
             </p>
           </div>
 
@@ -121,7 +122,7 @@ export default function LeaderboardPage() {
                     </div>
                     <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
                       <div className="rounded-lg border border-zinc-800 bg-zinc-950 p-3">
-                        <p className="text-zinc-500">Top Score</p>
+                        <p className="text-zinc-500">Ranking Score</p>
                         <p className="mt-1 font-bold text-emerald-400">
                           {entry.topScore}/100
                         </p>
@@ -146,7 +147,7 @@ export default function LeaderboardPage() {
                   <tr>
                     <th className="px-5 py-4 font-medium">Rank</th>
                     <th className="px-5 py-4 font-medium">Username</th>
-                    <th className="px-5 py-4 font-medium">Top Score</th>
+                    <th className="px-5 py-4 font-medium">Ranking Score</th>
                     <th className="px-5 py-4 font-medium">Average</th>
                     <th className="px-5 py-4 font-medium">Date Achieved</th>
                     <th className="px-5 py-4 font-medium">Compare</th>
