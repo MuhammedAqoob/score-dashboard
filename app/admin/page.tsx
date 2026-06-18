@@ -5,6 +5,7 @@ import { Timestamp } from "firebase/firestore";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AdminProtectedRoute } from "@/components/AdminProtectedRoute";
+import { AppToast } from "@/components/AppToast";
 import { MetricCard } from "@/components/MetricCard";
 import { StatusBadge } from "@/components/StatusBadge";
 import { AdminAnalyticsOverview } from "@/components/analytics/AdminAnalyticsOverview";
@@ -38,6 +39,8 @@ import {
 } from "@/services/promptService";
 import { Submission } from "@/types/submission";
 import { UserProfileWithId, UserStatus } from "@/types/user";
+
+const ADMIN_PREVIEW_LIMIT = 15;
 
 function formatDate(timestamp?: Timestamp) {
   if (!timestamp) {
@@ -95,8 +98,11 @@ function AdminDashboardContent() {
   const [version, setVersion] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+  const [toastMessage, setToastMessage] = useState("");
   const [userSearch, setUserSearch] = useState("");
   const [submissionSearch, setSubmissionSearch] = useState("");
+  const [showAllUsers, setShowAllUsers] = useState(false);
+  const [showAllSubmissions, setShowAllSubmissions] = useState(false);
   const [banDrafts, setBanDrafts] = useState<
     Record<string, { until: string; reason: string }>
   >({});
@@ -125,6 +131,18 @@ function AdminDashboardContent() {
       : submissions;
   }, [submissions, submissionSearch]);
 
+  const visibleUsers = showAllUsers
+    ? filteredUsers
+    : filteredUsers.slice(0, ADMIN_PREVIEW_LIMIT);
+  const visibleSubmissions = showAllSubmissions
+    ? filteredSubmissions
+    : filteredSubmissions.slice(0, ADMIN_PREVIEW_LIMIT);
+
+  const showToast = (nextMessage: string) => {
+    setToastMessage(nextMessage);
+    window.setTimeout(() => setToastMessage(""), 1800);
+  };
+
   const handleSavePrompt = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setMessage("");
@@ -137,7 +155,7 @@ function AdminDashboardContent() {
         version: versionValue,
       });
       await reload();
-      setMessage("Active prompt saved.");
+      showToast("Prompt saved");
     } catch (error) {
       setMessage(
         error instanceof Error ? error.message : "Could not save prompt.",
@@ -342,7 +360,7 @@ function AdminDashboardContent() {
           {!usersLoading && !usersError && filteredUsers.length > 0 && (
             <>
               <div className="mt-4 grid gap-3 md:hidden">
-                {filteredUsers.map((user) => {
+                {visibleUsers.map((user) => {
                   const userScore = scores[user.username];
                   const status = getEffectiveUserStatus(user);
                   const draft = banDrafts[user.username] ?? {
@@ -439,7 +457,7 @@ function AdminDashboardContent() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredUsers.map((user) => {
+                    {visibleUsers.map((user) => {
                       const userScore = scores[user.username];
                       const status = getEffectiveUserStatus(user);
                       const draft = banDrafts[user.username] ?? {
@@ -514,6 +532,19 @@ function AdminDashboardContent() {
                   </tbody>
                 </table>
               </div>
+              {filteredUsers.length > ADMIN_PREVIEW_LIMIT && (
+                <div className="mt-4 flex justify-center">
+                  <button
+                    className="rounded-md border border-zinc-700 px-4 py-2 text-sm font-semibold text-zinc-200 transition hover:bg-zinc-800"
+                    onClick={() => setShowAllUsers((current) => !current)}
+                    type="button"
+                  >
+                    {showAllUsers
+                      ? "Show less"
+                      : `View more (${filteredUsers.length - ADMIN_PREVIEW_LIMIT})`}
+                  </button>
+                </div>
+              )}
             </>
           )}
         </SectionShell>
@@ -537,7 +568,7 @@ function AdminDashboardContent() {
           {!submissionsLoading && !submissionsError && filteredSubmissions.length > 0 && (
             <>
               <div className="mt-4 grid gap-3 md:hidden">
-                {filteredSubmissions.map((submission) => {
+                {visibleSubmissions.map((submission) => {
                   const isEditing = editingSubmissionId === submission.id;
                   const status = getSubmissionStatus(submission);
 
@@ -638,7 +669,7 @@ function AdminDashboardContent() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredSubmissions.map((submission) => {
+                    {visibleSubmissions.map((submission) => {
                       const isEditing = editingSubmissionId === submission.id;
                       const status = getSubmissionStatus(submission);
 
@@ -705,6 +736,21 @@ function AdminDashboardContent() {
                   </tbody>
                 </table>
               </div>
+              {filteredSubmissions.length > ADMIN_PREVIEW_LIMIT && (
+                <div className="mt-4 flex justify-center">
+                  <button
+                    className="rounded-md border border-zinc-700 px-4 py-2 text-sm font-semibold text-zinc-200 transition hover:bg-zinc-800"
+                    onClick={() =>
+                      setShowAllSubmissions((current) => !current)
+                    }
+                    type="button"
+                  >
+                    {showAllSubmissions
+                      ? "Show less"
+                      : `View more (${filteredSubmissions.length - ADMIN_PREVIEW_LIMIT})`}
+                  </button>
+                </div>
+              )}
             </>
           )}
         </SectionShell>
@@ -772,6 +818,7 @@ function AdminDashboardContent() {
           </form>
         </SectionShell>
       </section>
+      <AppToast message={toastMessage} />
     </main>
   );
 }

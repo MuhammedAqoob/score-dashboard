@@ -3,6 +3,7 @@
 import { ChangeEvent, FormEvent, useState } from "react";
 import Link from "next/link";
 import { Timestamp } from "firebase/firestore";
+import { AppToast } from "@/components/AppToast";
 import { StatusBadge } from "@/components/StatusBadge";
 import {
   SubmissionAnalyticsPanel,
@@ -79,7 +80,7 @@ export default function Home() {
 
     try {
       await navigator.clipboard.writeText(prompt.content);
-      showTemporaryMessage(setCopyMessage, "Copied!");
+      showTemporaryMessage(setCopyMessage, "Prompt copied");
     } catch {
       showTemporaryMessage(setCopyMessage, "Could not copy prompt.");
     }
@@ -277,8 +278,10 @@ export default function Home() {
               >
                 Copy Prompt
               </button>
-              {copyMessage && (
-                <p className="text-sm font-medium text-zinc-300">{copyMessage}</p>
+              {copyMessage && copyMessage !== "Prompt copied" && (
+                <p className="text-sm font-medium text-red-200">
+                  {copyMessage}
+                </p>
               )}
             </div>
           </article>
@@ -428,6 +431,9 @@ export default function Home() {
           </div>
         </section>
       </section>
+      <AppToast
+        message={copyMessage === "Prompt copied" ? copyMessage : ""}
+      />
     </main>
   );
 }
