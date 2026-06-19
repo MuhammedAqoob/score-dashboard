@@ -191,7 +191,7 @@ export default function Home() {
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-zinc-950 text-zinc-200">
-      <section className="mx-auto flex min-h-[calc(100svh-4.25rem)] w-full max-w-7xl flex-col justify-center px-4 py-16 sm:px-6 lg:px-8">
+      <section className="mx-auto flex min-h-[calc(100svh-4.25rem)] w-full max-w-7xl flex-col justify-center px-4 pb-24 pt-10 sm:px-6 sm:pb-28 sm:pt-12 lg:px-8">
         <div className="max-w-4xl">
           <p className="inline-flex rounded-full border border-emerald-400/25 bg-emerald-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-100">
             Skill Profile Tracker
