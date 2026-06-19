@@ -5,14 +5,9 @@ import Link from "next/link";
 import { Timestamp } from "firebase/firestore";
 import { AppToast } from "@/components/AppToast";
 import { StatusBadge } from "@/components/StatusBadge";
-import {
-  SubmissionAnalyticsPanel,
-  SubmissionAnalyticsResult,
-} from "@/components/analytics/SubmissionAnalyticsPanel";
 import { useActivePrompt } from "@/hooks/useActivePrompt";
 import { useAuth } from "@/hooks/useAuth";
 import { useDailySubmission } from "@/hooks/useDailySubmission";
-import { useUserSubmissions } from "@/hooks/useUserSubmissions";
 import { ScoreValidationError } from "@/services/analysisService";
 import {
   getEffectiveUserStatus,
@@ -33,11 +28,41 @@ function formatDate(timestamp?: Timestamp) {
 }
 
 const platformBenefits = [
-  "Track growth over time",
-  "Identify strengths",
-  "Find improvement areas",
-  "Compare with leaderboard users",
-  "Visualize long-term trends",
+  {
+    title: "Track Growth",
+    body: "Monitor how your skills evolve over time.",
+    icon: "01",
+  },
+  {
+    title: "Discover Strengths",
+    body: "Identify the areas where you consistently perform well.",
+    icon: "02",
+  },
+  {
+    title: "Find Improvement Areas",
+    body: "Recognize opportunities for focused growth.",
+    icon: "03",
+  },
+  {
+    title: "Compare Progress",
+    body: "See how you rank alongside leaderboard users.",
+    icon: "04",
+  },
+];
+
+const workflowSteps = [
+  {
+    title: "Copy the prompt",
+    body: "Start from the official prompt so every submission uses the same scoring frame.",
+  },
+  {
+    title: "Run it in AI",
+    body: "Paste the prompt into your preferred AI tool and generate the scorecard output.",
+  },
+  {
+    title: "Paste and submit",
+    body: "Paste the response here to validate the scorecard and update your analytics.",
+  },
 ];
 
 export default function Home() {
@@ -51,13 +76,10 @@ export default function Home() {
     loading: dailySubmissionLoading,
     reload: reloadDailySubmission,
   } = useDailySubmission(canSubmit ? profile?.username : undefined);
-  const { submissions: userSubmissions } = useUserSubmissions(profile?.username);
   const [responseText, setResponseText] = useState("");
   const [copyMessage, setCopyMessage] = useState("");
   const [pasteMessage, setPasteMessage] = useState("");
   const [submissionMessage, setSubmissionMessage] = useState("");
-  const [analyticsResult, setAnalyticsResult] =
-    useState<SubmissionAnalyticsResult | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const submissionLocked = hasSubmittedToday || dailySubmissionLoading || !canSubmit;
@@ -120,6 +142,13 @@ export default function Home() {
     }
   };
 
+  const scrollToSection = (sectionId: string) => {
+    document.getElementById(sectionId)?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  };
+
   const handleSubmitResponse = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSubmissionMessage("");
@@ -144,30 +173,12 @@ export default function Home() {
       });
       setResponseText("");
       await reloadDailySubmission();
-      setAnalyticsResult({
-        id: submission.id,
-        username: profile.username,
-        dayKey: submission.dayKey,
-        scores: submission.scores,
-        aiReportedScore: submission.aiReportedScore,
-        calculatedScore: submission.calculatedScore,
-        validated: submission.validated,
-        message:
-          "The AI-reported score matches the site calculation within the allowed rounding tolerance.",
-      });
       setSubmissionMessage(
         `Response submitted and scored. Your score: ${submission.calculatedScore}/100.`,
       );
     } catch (error) {
       if (error instanceof ScoreValidationError) {
-        setAnalyticsResult({
-          username: profile.username,
-          scores: error.scores,
-          aiReportedScore: error.aiReportedScore,
-          calculatedScore: error.calculatedScore,
-          validated: false,
-          message: error.message,
-        });
+        setSubmissionMessage(error.message);
       }
 
       setSubmissionMessage(
@@ -179,258 +190,289 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-zinc-950 px-4 py-6 text-zinc-200 sm:px-6 sm:py-8">
-      <section className="mx-auto flex w-full max-w-6xl min-w-0 flex-col gap-6 sm:gap-8">
-        <header className="flex min-w-0 flex-col gap-3">
-          <p className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
-            Home
+    <main className="min-h-screen overflow-x-hidden bg-zinc-950 text-zinc-200">
+      <section className="mx-auto flex min-h-[70vh] w-full max-w-7xl flex-col justify-center px-4 py-16 sm:px-6 md:min-h-[78vh] lg:px-8">
+        <div className="max-w-4xl">
+          <p className="inline-flex rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-xs font-medium text-zinc-300">
+            Skill Profile Tracker
           </p>
-          <div className="max-w-3xl min-w-0">
-            <h1 className="break-words text-3xl font-bold text-white sm:text-4xl">
-              Build a skill profile from validated AI analysis.
-            </h1>
-            <p className="mt-3 text-sm leading-6 text-zinc-400">
-              Copy the official prompt, run it externally, and paste the result
-              back here to turn the analysis into scores, charts, and leaderboard
-              comparisons.
-            </p>
+          <h1 className="mt-6 max-w-4xl text-4xl font-semibold leading-tight text-white sm:text-5xl lg:text-6xl">
+            Track how your thinking evolves over time.
+          </h1>
+          <p className="mt-5 max-w-2xl text-base leading-7 text-zinc-400 sm:text-lg">
+            Submit AI-evaluated scorecards, validate the results, and uncover
+            patterns in your problem-solving, learning, and execution skills.
+          </p>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <button
+              className="inline-flex min-h-12 cursor-pointer items-center justify-center rounded-full bg-zinc-100 px-6 text-sm font-semibold text-zinc-950 transition hover:bg-zinc-300 active:scale-[0.98]"
+              onClick={() => scrollToSection("submission")}
+              type="button"
+            >
+              Start Analysis
+            </button>
+            <button
+              className="inline-flex min-h-12 cursor-pointer items-center justify-center rounded-full border border-white/10 px-6 text-sm font-semibold text-zinc-100 transition hover:border-white/20 hover:bg-white/[0.05] active:scale-[0.98]"
+              onClick={() => scrollToSection("how-it-works")}
+              type="button"
+            >
+              How It Works
+            </button>
           </div>
-        </header>
+        </div>
+      </section>
 
-        <section className="min-w-0 overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900 p-4 shadow-sm shadow-black/20 sm:p-6">
-          <div className="min-w-0">
-            <p className="text-sm font-medium text-emerald-400">
-              Skill and cognitive profile tracker
-            </p>
-            <h2 className="mt-2 max-w-2xl break-words text-2xl font-bold text-white sm:text-3xl">
-              Measure how your thinking, research, communication, and execution
-              skills change over time.
+      <section className="px-4 py-8 sm:px-6 lg:px-8">
+        <div className="mx-auto grid w-full max-w-7xl gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {platformBenefits.map((benefit) => (
+            <article
+              className="min-w-0 rounded-2xl border border-white/10 bg-white/[0.03] p-5 shadow-sm shadow-black/20 transition hover:border-white/20 hover:bg-white/[0.045]"
+              key={benefit.title}
+            >
+              <span className="text-xs font-semibold text-zinc-500">
+                {benefit.icon}
+              </span>
+              <h2 className="mt-4 text-base font-semibold text-white">
+                {benefit.title}
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-zinc-400">
+                {benefit.body}
+              </p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section
+        className="scroll-mt-24 px-4 py-10 sm:px-6 lg:px-8"
+        id="submission"
+      >
+        <div className="mx-auto w-full max-w-7xl">
+          <div className="mb-6 max-w-2xl">
+            <p className="text-sm font-medium text-zinc-500">Submit scorecard</p>
+            <h2 className="mt-2 text-2xl font-semibold text-white sm:text-3xl">
+              Turn an AI response into validated progress.
             </h2>
-            <p className="mt-3 max-w-3xl text-sm leading-6 text-zinc-400">
-              Score Board uses an external AI analysis workflow, then validates
-              the structured scorecard before it enters your dashboard. Each
-              accepted result becomes part of a long-term performance history
-              across multiple work-related skill categories.
-            </p>
-
-            <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {platformBenefits.map((benefit) => (
-                <div
-                  className="flex min-w-0 items-center gap-3 rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-3"
-                  key={benefit}
-                >
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-emerald-900/60 bg-emerald-950/40 text-xs font-bold text-emerald-300">
-                    +
-                  </span>
-                  <span className="min-w-0 break-words text-sm font-medium text-zinc-200">
-                    {benefit}
-                  </span>
-                </div>
-              ))}
-            </div>
           </div>
-        </section>
 
-        <div className="grid min-w-0 gap-6 lg:grid-cols-2">
-          <article className="min-w-0 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 p-4 shadow-sm shadow-black/20 sm:p-5">
-            <div className="flex min-w-0 flex-col gap-4 border-b border-zinc-800 pb-4 sm:flex-row sm:items-start sm:justify-between">
-              <div className="min-w-0">
-                <p className="text-sm text-zinc-400">Official prompt</p>
-                <h2 className="mt-1 text-2xl font-bold text-white">
-                  {prompt?.title ?? "Prompt"}
-                </h2>
-                {prompt && (
-                  <p className="mt-2 break-words text-sm text-zinc-500">
-                    Version v{prompt.version} - Updated {formatDate(prompt.updatedAt)}
+          <div className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
+            <article className="min-w-0 rounded-2xl border border-white/10 bg-white/[0.03] p-5 shadow-sm shadow-black/20 sm:p-6">
+              <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-zinc-500">
+                    Official Prompt
+                  </p>
+                  <h3 className="mt-1 text-xl font-semibold text-white">
+                    {prompt?.title ?? "Prompt"}
+                  </h3>
+                  <p className="mt-2 text-sm leading-6 text-zinc-400">
+                    Use this exact prompt for consistent scoring.
+                  </p>
+                  {prompt && (
+                    <p className="mt-2 break-words text-xs text-zinc-500">
+                      Version v{prompt.version} - Updated{" "}
+                      {formatDate(prompt.updatedAt)}
+                    </p>
+                  )}
+                </div>
+                <button
+                  className="inline-flex min-h-11 w-full cursor-pointer items-center justify-center rounded-full bg-zinc-100 px-5 text-sm font-semibold text-zinc-950 transition hover:bg-zinc-300 active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-zinc-800 disabled:text-zinc-500 sm:w-auto"
+                  disabled={!prompt}
+                  onClick={handleCopyPrompt}
+                  type="button"
+                >
+                  Copy Prompt
+                </button>
+              </div>
+
+              <div className="mt-5">
+                {promptLoading && (
+                  <p className="text-sm text-zinc-400">Loading prompt...</p>
+                )}
+
+                {!promptLoading && promptError && (
+                  <p className="text-sm text-red-200">{promptError}</p>
+                )}
+
+                {!promptLoading && !promptError && !prompt && (
+                  <p className="text-sm text-zinc-400">
+                    No active prompt is available yet.
                   </p>
                 )}
+
+                {prompt && (
+                  <details className="group rounded-xl border border-white/10 bg-zinc-950/70">
+                    <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-3 text-sm font-medium text-zinc-200 transition hover:text-white">
+                      View full prompt
+                      <span className="text-zinc-500 transition group-open:rotate-45">
+                        +
+                      </span>
+                    </summary>
+                    <pre className="max-h-80 max-w-full overflow-y-auto overflow-x-hidden border-t border-white/10 p-4 whitespace-pre-wrap break-words text-sm leading-6 text-zinc-200 [overflow-wrap:anywhere]">
+                      {prompt.content}
+                    </pre>
+                  </details>
+                )}
               </div>
-            </div>
 
-            <div className="mt-5">
-              {promptLoading && (
-                <p className="text-sm text-zinc-400">Loading prompt...</p>
-              )}
-
-              {!promptLoading && promptError && (
-                <p className="text-sm text-red-200">{promptError}</p>
-              )}
-
-              {!promptLoading && !promptError && !prompt && (
-                <p className="text-sm text-zinc-400">
-                  No active prompt is available yet.
-                </p>
-              )}
-
-              {prompt && (
-                <pre className="max-h-[400px] max-w-full overflow-y-auto overflow-x-hidden whitespace-pre-wrap break-words rounded-md border border-zinc-800 bg-zinc-950 p-4 text-sm leading-6 text-zinc-100 [overflow-wrap:anywhere]">
-                  {prompt.content}
-                </pre>
-              )}
-            </div>
-
-            <div className="mt-5 flex min-w-0 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-              <button
-                className="w-full cursor-pointer rounded-md bg-zinc-100 px-5 py-3 text-sm font-bold text-zinc-950 transition hover:bg-zinc-300 active:bg-zinc-400 disabled:cursor-not-allowed disabled:bg-zinc-800 disabled:text-zinc-500 sm:w-auto"
-                disabled={!prompt}
-                onClick={handleCopyPrompt}
-                type="button"
-              >
-                Copy Prompt
-              </button>
               {copyMessage && copyMessage !== "Prompt copied" && (
-                <p className="text-sm font-medium text-red-200">
+                <p className="mt-4 text-sm font-medium text-red-200">
                   {copyMessage}
                 </p>
               )}
-            </div>
-          </article>
+            </article>
 
-          <form
-            className="min-w-0 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 p-4 shadow-sm shadow-black/20 sm:p-5"
-            onSubmit={handleSubmitResponse}
-          >
-            <div className="flex flex-col gap-2">
-              <p className="text-sm text-zinc-400">Score submission</p>
-              <h2 className="text-2xl font-bold text-white">Paste AI Output</h2>
-              {profile && (
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-sm text-zinc-400">Account status</span>
-                  <StatusBadge status={userStatus} />
-                </div>
-              )}
-              {!canSubmit && (
-                <p className="rounded-md border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm text-zinc-400">
-                  {authLoading
-                    ? "Checking your account..."
-                    : profile
-                      ? isBanned
-                        ? `Your account is temporarily banned${banUntilText ? ` until ${banUntilText}` : ""}.${profile.banReason ? ` Reason: ${profile.banReason}` : ""}`
-                        : userStatus === "pending"
-                          ? "Your account is pending approval. You can view the leaderboard while you wait."
-                          : "Your account access has been revoked. You can still view the leaderboard."
-                      : "Log in with an approved account to submit scores."}
+            <form
+              className="min-w-0 rounded-2xl border border-white/10 bg-white/[0.03] p-5 shadow-sm shadow-black/20 sm:p-6"
+              onSubmit={handleSubmitResponse}
+            >
+              <div className="flex flex-col gap-2">
+                <p className="text-sm font-medium text-zinc-500">
+                  Paste AI Output
                 </p>
-              )}
-              {hasSubmittedToday && (
-                <p className="rounded-md border border-amber-900/60 bg-amber-950/30 px-4 py-3 text-sm text-amber-100">
-                  Your result was submitted today. Come back tomorrow after
-                  reset time.
+                <h3 className="text-xl font-semibold text-white">
+                  Submit the validated scorecard
+                </h3>
+                <p className="text-sm leading-6 text-zinc-400">
+                  Paste the response from your external AI tool here.
                 </p>
-              )}
-            </div>
-
-            <div className="mt-4 flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <label className="text-sm font-medium text-zinc-300">
-                Response text
-              </label>
-              <div className="flex min-w-0 flex-wrap items-center gap-2">
-                <button
-                  className="cursor-pointer rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-semibold text-zinc-200 transition hover:bg-zinc-800 active:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50"
-                  disabled={!canSubmit || submissionLocked}
-                  onClick={handlePasteFromClipboard}
-                  type="button"
-                >
-                  Paste
-                </button>
-                {pasteMessage && (
-                  <span className="break-words text-xs text-zinc-400">{pasteMessage}</span>
+                {profile && (
+                  <div className="mt-1 flex flex-wrap items-center gap-2">
+                    <span className="text-sm text-zinc-400">Account status</span>
+                    <StatusBadge status={userStatus} />
+                  </div>
+                )}
+                {!canSubmit && (
+                  <p className="rounded-xl border border-white/10 bg-zinc-950/70 px-4 py-3 text-sm text-zinc-400">
+                    {authLoading
+                      ? "Checking your account..."
+                      : profile
+                        ? isBanned
+                          ? `Your account is temporarily banned${banUntilText ? ` until ${banUntilText}` : ""}.${profile.banReason ? ` Reason: ${profile.banReason}` : ""}`
+                          : userStatus === "pending"
+                            ? "Your account is pending approval. You can view the leaderboard while you wait."
+                            : "Your account access has been revoked. You can still view the leaderboard."
+                        : "Log in with an approved account to submit scores."}
+                  </p>
+                )}
+                {hasSubmittedToday && (
+                  <p className="rounded-xl border border-amber-900/60 bg-amber-950/30 px-4 py-3 text-sm text-amber-100">
+                    Your result was submitted today. Come back tomorrow after
+                    reset time.
+                  </p>
                 )}
               </div>
-            </div>
 
-            <textarea
-              className="mt-2 min-h-72 w-full max-w-full resize-y rounded-md border border-zinc-700 bg-zinc-950 px-3 py-3 text-sm leading-6 text-zinc-50 outline-none transition focus:border-emerald-400 disabled:cursor-not-allowed disabled:opacity-50"
-              disabled={!canSubmit || submissionLocked}
-              onChange={(event) => setResponseText(event.target.value)}
-              placeholder="Paste the response you got from ChatGPT, Gemini, Claude, or another AI tool."
-              value={responseText}
-            />
+              <div className="mt-5 flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <label className="text-sm font-medium text-zinc-300">
+                  Response text
+                </label>
+                <div className="flex min-w-0 flex-wrap items-center gap-2">
+                  <button
+                    className="cursor-pointer rounded-full border border-white/10 px-4 py-2 text-xs font-semibold text-zinc-200 transition hover:bg-white/[0.06] disabled:cursor-not-allowed disabled:opacity-50"
+                    disabled={!canSubmit || submissionLocked}
+                    onClick={handlePasteFromClipboard}
+                    type="button"
+                  >
+                    Paste
+                  </button>
+                  {pasteMessage && (
+                    <span className="break-words text-xs text-zinc-400">
+                      {pasteMessage}
+                    </span>
+                  )}
+                </div>
+              </div>
 
-            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <input
-                accept=".txt,text/plain"
-                className="w-full max-w-full min-w-0 text-sm text-zinc-300 file:mr-4 file:cursor-pointer file:rounded-md file:border-0 file:bg-zinc-100 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-zinc-950 file:transition file:hover:bg-zinc-300 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+              <textarea
+                className="mt-2 min-h-56 w-full max-w-full resize-y rounded-xl border border-white/10 bg-zinc-950/80 px-4 py-3 text-sm leading-6 text-zinc-50 outline-none transition placeholder:text-zinc-600 focus:border-white/30 disabled:cursor-not-allowed disabled:opacity-50"
                 disabled={!canSubmit || submissionLocked}
-                onChange={handleFileUpload}
-                type="file"
+                onChange={(event) => setResponseText(event.target.value)}
+                placeholder="Paste the response you got from ChatGPT, Gemini, Claude, or another AI tool."
+                value={responseText}
               />
 
-              <button
-                className="cursor-pointer rounded-md bg-emerald-500 px-5 py-3 font-bold text-zinc-950 transition hover:bg-emerald-400 active:bg-emerald-600 disabled:cursor-not-allowed disabled:bg-zinc-700 disabled:text-zinc-400"
-                disabled={!canSubmit || submitting || submissionLocked}
-                type="submit"
-              >
-                {submitting ? "Submitting..." : "Submit Score"}
-              </button>
-            </div>
+              <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <input
+                  accept=".txt,text/plain"
+                  className="w-full max-w-full min-w-0 text-sm text-zinc-300 file:mr-4 file:cursor-pointer file:rounded-full file:border-0 file:bg-white/[0.08] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-zinc-100 file:transition file:hover:bg-white/[0.12] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+                  disabled={!canSubmit || submissionLocked}
+                  onChange={handleFileUpload}
+                  type="file"
+                />
 
-            {submissionMessage && (
-              <p className="mt-4 rounded-md border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm text-zinc-200">
-                {submissionMessage}
+                <button
+                  className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-full border border-white/10 bg-white/[0.08] px-5 text-sm font-semibold text-white transition hover:bg-white/[0.12] active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-zinc-800 disabled:text-zinc-500"
+                  disabled={!canSubmit || submitting || submissionLocked}
+                  type="submit"
+                >
+                  {submitting ? "Submitting..." : "Submit Score"}
+                </button>
+              </div>
+
+              <p className="mt-4 rounded-xl border border-white/10 bg-zinc-950/60 px-4 py-3 text-sm text-zinc-400">
+                Analytics and score history are available in your dashboard.
               </p>
-            )}
 
-            {!profile && !authLoading && (
-              <Link
-                className="mt-4 inline-flex cursor-pointer rounded-md border border-zinc-700 px-4 py-2 text-sm font-semibold text-zinc-100 transition hover:bg-zinc-800 active:bg-zinc-700"
-                href="/login"
-              >
-                Login / Signup
-              </Link>
-            )}
-          </form>
-        </div>
+              {submissionMessage && (
+                <p className="mt-4 rounded-xl border border-white/10 bg-zinc-950/70 px-4 py-3 text-sm text-zinc-200">
+                  {submissionMessage}
+                </p>
+              )}
 
-        {analyticsResult && (
-          <SubmissionAnalyticsPanel
-            historicalSubmissions={userSubmissions}
-            result={analyticsResult}
-          />
-        )}
-
-        <section className="min-w-0 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 p-4 sm:p-5">
-          <div className="max-w-2xl">
-            <p className="text-sm font-medium text-emerald-400">Quick Steps</p>
-            <h2 className="mt-1 text-2xl font-bold text-white">
-              How It Works
-            </h2>
-            <p className="mt-2 text-sm leading-6 text-zinc-400">
-              Use the official prompt, bring back the AI output, and the site
-              validates the score before it enters analytics.
-            </p>
+              {!profile && !authLoading && (
+                <Link
+                  className="mt-4 inline-flex cursor-pointer rounded-full border border-white/10 px-4 py-2 text-sm font-semibold text-zinc-100 transition hover:bg-white/[0.06]"
+                  href="/login"
+                >
+                  Login / Signup
+                </Link>
+              )}
+            </form>
           </div>
-          <div className="mt-5 grid gap-3 md:grid-cols-3">
-            {[
-              {
-                title: "Copy the prompt",
-                body: "Start from the official prompt so every submission uses the same scoring frame.",
-              },
-              {
-                title: "Run it in AI",
-                body: "Paste the prompt into your preferred AI tool and let it produce the scored response.",
-              },
-              {
-                title: "Paste and analyze",
-                body: "Submit the output here to validate, score, and visualize your performance history.",
-              },
-            ].map((step, index) => (
-              <div
-                className="rounded-lg border border-zinc-800 bg-zinc-950 p-4"
+        </div>
+      </section>
+
+      <section
+        className="scroll-mt-24 px-4 py-10 sm:px-6 lg:px-8"
+        id="how-it-works"
+      >
+        <div className="mx-auto w-full max-w-7xl">
+          <div className="mb-6 max-w-2xl">
+            <p className="text-sm font-medium text-zinc-500">How It Works</p>
+            <h2 className="mt-2 text-2xl font-semibold text-white sm:text-3xl">
+              A consistent 3-step workflow.
+            </h2>
+          </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            {workflowSteps.map((step, index) => (
+              <article
+                className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 transition hover:border-white/20 hover:bg-white/[0.045]"
                 key={step.title}
               >
-                <span className="flex h-8 w-8 items-center justify-center rounded-full border border-zinc-700 bg-zinc-900 text-sm font-bold text-white">
-                  {index + 1}
+                <span className="text-xs font-semibold text-zinc-500">
+                  {String(index + 1).padStart(2, "0")}
                 </span>
                 <h3 className="mt-4 font-semibold text-white">{step.title}</h3>
                 <p className="mt-2 text-sm leading-6 text-zinc-400">
                   {step.body}
                 </p>
-              </div>
+              </article>
             ))}
           </div>
-        </section>
+        </div>
       </section>
+
+      <footer className="border-t border-white/10 px-4 py-6 sm:px-6 lg:px-8">
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-3 text-sm text-zinc-500 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="font-semibold text-zinc-200">Score Board</p>
+            <p className="mt-1">Built with Next.js and Firebase.</p>
+          </div>
+          <p>&copy; 2026 Score Board. All rights reserved.</p>
+        </div>
+      </footer>
+
       <AppToast
         message={copyMessage === "Prompt copied" ? copyMessage : ""}
       />
