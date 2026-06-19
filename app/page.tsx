@@ -191,9 +191,9 @@ export default function Home() {
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-zinc-950 text-zinc-200">
-      <section className="mx-auto flex min-h-[70vh] w-full max-w-7xl flex-col justify-center px-4 py-16 sm:px-6 md:min-h-[78vh] lg:px-8">
+      <section className="mx-auto flex min-h-[calc(100svh-4.25rem)] w-full max-w-7xl flex-col justify-center px-4 py-16 sm:px-6 lg:px-8">
         <div className="max-w-4xl">
-          <p className="inline-flex rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-xs font-medium text-zinc-300">
+          <p className="inline-flex rounded-full border border-emerald-400/25 bg-emerald-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-100">
             Skill Profile Tracker
           </p>
           <h1 className="mt-6 max-w-4xl text-4xl font-semibold leading-tight text-white sm:text-5xl lg:text-6xl">
@@ -222,24 +222,35 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mx-auto grid w-full max-w-7xl gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {platformBenefits.map((benefit) => (
-            <article
-              className="min-w-0 rounded-2xl border border-white/10 bg-white/[0.03] p-5 shadow-sm shadow-black/20 transition hover:border-white/20 hover:bg-white/[0.045]"
-              key={benefit.title}
-            >
-              <span className="text-xs font-semibold text-zinc-500">
-                {benefit.icon}
-              </span>
-              <h2 className="mt-4 text-base font-semibold text-white">
-                {benefit.title}
-              </h2>
-              <p className="mt-2 text-sm leading-6 text-zinc-400">
-                {benefit.body}
-              </p>
-            </article>
-          ))}
+      <section className="px-4 py-14 sm:px-6 lg:px-8">
+        <div className="mx-auto w-full max-w-7xl">
+          <div className="mb-7 max-w-3xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200">
+              Benefits
+            </p>
+            <h2 className="mt-3 text-3xl font-semibold leading-tight text-white sm:text-4xl">
+              See your progress from every useful angle.
+            </h2>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {platformBenefits.map((benefit) => (
+              <article
+                className="min-w-0 rounded-2xl border border-white/15 bg-zinc-900/80 p-5 shadow-lg shadow-black/30 transition hover:border-white/25 hover:bg-zinc-900 sm:bg-white/[0.04]"
+                key={benefit.title}
+              >
+                <span className="text-xs font-semibold text-emerald-200">
+                  {benefit.icon}
+                </span>
+                <h3 className="mt-4 text-base font-semibold text-white">
+                  {benefit.title}
+                </h3>
+                <p className="mt-2 text-sm leading-6 text-zinc-300">
+                  {benefit.body}
+                </p>
+              </article>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -249,17 +260,19 @@ export default function Home() {
       >
         <div className="mx-auto w-full max-w-7xl">
           <div className="mb-6 max-w-2xl">
-            <p className="text-sm font-medium text-zinc-500">Submit scorecard</p>
-            <h2 className="mt-2 text-2xl font-semibold text-white sm:text-3xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200">
+              Submit scorecard
+            </p>
+            <h2 className="mt-3 text-3xl font-semibold leading-tight text-white sm:text-4xl">
               Turn an AI response into validated progress.
             </h2>
           </div>
 
-          <div className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
-            <article className="min-w-0 rounded-2xl border border-white/10 bg-white/[0.03] p-5 shadow-sm shadow-black/20 sm:p-6">
+          <div className="grid gap-5">
+            <article className="min-w-0 self-start rounded-2xl border border-white/15 bg-zinc-900/80 p-5 shadow-lg shadow-black/30 sm:bg-white/[0.04] sm:p-6">
               <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-zinc-500">
+                  <p className="text-sm font-medium text-zinc-400">
                     Official Prompt
                   </p>
                   <h3 className="mt-1 text-xl font-semibold text-white">
@@ -323,11 +336,11 @@ export default function Home() {
             </article>
 
             <form
-              className="min-w-0 rounded-2xl border border-white/10 bg-white/[0.03] p-5 shadow-sm shadow-black/20 sm:p-6"
+              className="min-w-0 rounded-2xl border border-white/15 bg-zinc-900/80 p-5 shadow-lg shadow-black/30 sm:bg-white/[0.04] sm:p-6"
               onSubmit={handleSubmitResponse}
             >
               <div className="flex flex-col gap-2">
-                <p className="text-sm font-medium text-zinc-500">
+                <p className="text-sm font-medium text-zinc-400">
                   Paste AI Output
                 </p>
                 <h3 className="text-xl font-semibold text-white">
@@ -385,7 +398,7 @@ export default function Home() {
               </div>
 
               <textarea
-                className="mt-2 min-h-56 w-full max-w-full resize-y rounded-xl border border-white/10 bg-zinc-950/80 px-4 py-3 text-sm leading-6 text-zinc-50 outline-none transition placeholder:text-zinc-600 focus:border-white/30 disabled:cursor-not-allowed disabled:opacity-50"
+                className="mt-2 min-h-48 w-full max-w-full resize-y rounded-xl border border-white/10 bg-zinc-950/80 px-4 py-3 text-sm leading-6 text-zinc-50 outline-none transition placeholder:text-zinc-600 focus:border-white/30 disabled:cursor-not-allowed disabled:opacity-50"
                 disabled={!canSubmit || submissionLocked}
                 onChange={(event) => setResponseText(event.target.value)}
                 placeholder="Paste the response you got from ChatGPT, Gemini, Claude, or another AI tool."
@@ -402,7 +415,7 @@ export default function Home() {
                 />
 
                 <button
-                  className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-full border border-white/10 bg-white/[0.08] px-5 text-sm font-semibold text-white transition hover:bg-white/[0.12] active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-zinc-800 disabled:text-zinc-500"
+                  className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-full border border-emerald-300/30 bg-emerald-500 px-5 text-sm font-semibold text-zinc-950 shadow-lg shadow-emerald-950/40 transition hover:bg-emerald-400 active:scale-[0.98] disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-zinc-800 disabled:text-zinc-500 disabled:shadow-none"
                   disabled={!canSubmit || submitting || submissionLocked}
                   type="submit"
                 >
@@ -439,22 +452,24 @@ export default function Home() {
       >
         <div className="mx-auto w-full max-w-7xl">
           <div className="mb-6 max-w-2xl">
-            <p className="text-sm font-medium text-zinc-500">How It Works</p>
-            <h2 className="mt-2 text-2xl font-semibold text-white sm:text-3xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200">
+              How It Works
+            </p>
+            <h2 className="mt-3 text-3xl font-semibold leading-tight text-white sm:text-4xl">
               A consistent 3-step workflow.
             </h2>
           </div>
           <div className="grid gap-4 md:grid-cols-3">
             {workflowSteps.map((step, index) => (
               <article
-                className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 transition hover:border-white/20 hover:bg-white/[0.045]"
+                className="rounded-2xl border border-white/15 bg-zinc-900/80 p-5 shadow-lg shadow-black/30 transition hover:border-white/25 hover:bg-zinc-900 md:bg-white/[0.04]"
                 key={step.title}
               >
-                <span className="text-xs font-semibold text-zinc-500">
+                <span className="text-xs font-semibold text-emerald-200">
                   {String(index + 1).padStart(2, "0")}
                 </span>
                 <h3 className="mt-4 font-semibold text-white">{step.title}</h3>
-                <p className="mt-2 text-sm leading-6 text-zinc-400">
+                <p className="mt-2 text-sm leading-6 text-zinc-300">
                   {step.body}
                 </p>
               </article>

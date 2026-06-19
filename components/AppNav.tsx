@@ -180,16 +180,16 @@ export function AppNav() {
       {sheetOpen && (
         <div
           aria-modal="true"
-          className="fixed inset-0 z-50 md:hidden"
+          className="fixed inset-0 z-[100] isolate bg-black md:hidden"
           role="dialog"
         >
           <button
             aria-label="Close navigation menu"
-            className="absolute inset-0 h-full w-full cursor-default bg-black/60 backdrop-blur-sm"
+            className="absolute inset-0 h-full w-full cursor-default bg-black"
             onClick={() => setSheetOpen(false)}
             type="button"
           />
-          <div className="absolute right-0 top-0 flex h-full w-[min(22rem,calc(100vw-2rem))] flex-col border-l border-white/10 bg-zinc-950 p-5 shadow-2xl shadow-black/50 transition-transform duration-300 ease-out">
+          <div className="absolute right-0 top-0 z-[101] flex h-full w-[min(22rem,calc(100vw-2rem))] flex-col border-l border-white/15 bg-black p-5 shadow-2xl shadow-black ring-1 ring-white/10 transition-transform duration-300 ease-out">
             <div className="flex items-center justify-between gap-4">
               <Link
                 className="text-base font-semibold text-white"
