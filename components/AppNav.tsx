@@ -147,7 +147,7 @@ export function AppNav() {
                   </div>
 
                   <button
-                    className="flex w-full cursor-pointer items-center gap-2 px-4 py-3 text-left text-sm text-zinc-300 transition hover:bg-red-500/10 hover:text-red-300 active:bg-red-500/20"
+                    className="m-2 flex w-[calc(100%-1rem)] cursor-pointer items-center gap-2 rounded-xl border border-red-400/20 bg-red-500/10 px-3 py-2.5 text-left text-sm font-semibold text-red-200 transition hover:border-red-300/35 hover:bg-red-500/15 hover:text-red-100 active:bg-red-500/20"
                     onClick={handleLogout}
                     type="button"
                   >
@@ -266,7 +266,7 @@ export function AppNav() {
                     </div>
                   </div>
                   <button
-                    className="cursor-pointer rounded-full border border-white/10 px-3 py-2 text-sm font-semibold text-zinc-300 transition hover:bg-red-500/10 hover:text-red-300"
+                    className="cursor-pointer rounded-full border border-red-400/25 bg-red-500/10 px-3 py-2 text-sm font-semibold text-red-200 transition hover:border-red-300/40 hover:bg-red-500/15 hover:text-red-100"
                     onClick={handleLogout}
                     type="button"
                   >

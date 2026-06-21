@@ -2,7 +2,6 @@
 
 import { FormEvent, ReactNode, useMemo, useState } from "react";
 import { Timestamp } from "firebase/firestore";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AdminProtectedRoute } from "@/components/AdminProtectedRoute";
 import { AppToast } from "@/components/AppToast";
@@ -72,8 +71,8 @@ function SectionShell({
   children: ReactNode;
 }) {
   return (
-    <section className="card min-w-0 overflow-hidden p-5 sm:p-6">
-      <div>
+    <section className="card admin-section min-w-0 overflow-hidden p-5 sm:p-6">
+      <div className="border-b border-white/[0.07] pb-5">
         {eyebrow && <p className="eyebrow">{eyebrow}</p>}
         <h2 className="mt-1 text-xl font-semibold tracking-tight text-white">
           {title}
@@ -82,7 +81,7 @@ function SectionShell({
           <p className="mt-1.5 text-sm text-zinc-400">{description}</p>
         )}
       </div>
-      <div className="mt-5">{children}</div>
+      <div className="mt-6">{children}</div>
     </section>
   );
 }
@@ -301,14 +300,8 @@ function AdminDashboardContent() {
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-            <Link
-              className="btn btn-ghost w-full sm:w-auto"
-              href="/"
-            >
-              Homepage
-            </Link>
             <button
-              className="btn btn-light w-full sm:w-auto"
+              className="btn btn-logout w-full sm:w-auto"
               onClick={handleLogout}
               type="button"
             >
@@ -374,7 +367,7 @@ function AdminDashboardContent() {
               Search users
             </span>
             <input
-              className="input mt-2"
+              className="input mt-2 !min-h-11 !rounded-xl !bg-white/[0.045]"
               onChange={(event) => setUserSearch(event.target.value)}
               placeholder="username"
               value={userSearch}
@@ -410,7 +403,7 @@ function AdminDashboardContent() {
 
                   return (
                     <article
-                      className="min-w-0 rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4"
+                      className="queue-card min-w-0 rounded-2xl p-4"
                       key={user.id}
                     >
                       <div className="flex min-w-0 items-start justify-between gap-3">
@@ -484,8 +477,8 @@ function AdminDashboardContent() {
                 })}
               </div>
 
-              <div className="mt-4 hidden max-w-full overflow-x-auto rounded-2xl border border-white/[0.07] md:block">
-                <table className="pro-table min-w-[980px]">
+              <div className="queue-table-wrap mt-5 hidden max-w-full overflow-x-auto rounded-2xl md:block">
+                <table className="pro-table admin-queue-table min-w-[980px]">
                   <thead>
                     <tr>
                       <th>Username</th>
@@ -613,7 +606,7 @@ function AdminDashboardContent() {
               Search submissions
             </span>
             <input
-              className="input mt-2"
+              className="input mt-2 !min-h-11 !rounded-xl !bg-white/[0.045]"
               onChange={(event) => setSubmissionSearch(event.target.value)}
               placeholder="username or day"
               value={submissionSearch}
@@ -645,7 +638,7 @@ function AdminDashboardContent() {
 
                   return (
                     <article
-                      className={`min-w-0 rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4 ${
+                      className={`queue-card min-w-0 rounded-2xl p-4 ${
                         status === "deleted" ? "opacity-60" : ""
                       }`}
                       key={submission.id}
@@ -727,8 +720,8 @@ function AdminDashboardContent() {
                 })}
               </div>
 
-              <div className="mt-4 hidden max-w-full overflow-x-auto rounded-2xl border border-white/[0.07] md:block">
-                <table className="pro-table min-w-[980px]">
+              <div className="queue-table-wrap mt-5 hidden max-w-full overflow-x-auto rounded-2xl md:block">
+                <table className="pro-table admin-queue-table min-w-[980px]">
                   <thead>
                     <tr>
                       <th>User</th>
@@ -907,7 +900,7 @@ function AdminDashboardContent() {
               Content
               <textarea className="input min-h-80 resize-y font-mono leading-6" onChange={(event) => setContent(event.target.value)} value={contentValue} />
             </label>
-            <button className="btn btn-primary mt-5 w-full sm:w-auto" disabled={saving} type="submit">
+            <button className="btn btn-save-prompt mt-5 w-full sm:w-auto" disabled={saving} type="submit">
               {saving && <span className="spinner !h-4 !w-4 !border-emerald-950/40 !border-t-emerald-950" />}
               {saving ? "Saving..." : "Save Active Prompt"}
             </button>

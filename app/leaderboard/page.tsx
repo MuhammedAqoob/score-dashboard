@@ -44,6 +44,7 @@ export default function LeaderboardPage() {
   const { profile } = useAuth();
   const { entries, loading, error } = useLeaderboard(100);
   const [search, setSearch] = useState("");
+  const [showAllDesktop, setShowAllDesktop] = useState(false);
   const [compareUsername, setCompareUsername] = useState<string | null>(null);
   const filteredEntries = useMemo(() => {
     const searchValue = search.trim().toLowerCase();
@@ -56,11 +57,14 @@ export default function LeaderboardPage() {
       entry.username.toLowerCase().includes(searchValue),
     );
   }, [entries, search]);
+  const visibleDesktopEntries = showAllDesktop
+    ? filteredEntries
+    : filteredEntries.slice(0, 10);
 
   return (
     <main className="min-h-screen overflow-x-hidden px-4 py-8 text-zinc-200 sm:px-6 sm:py-10">
       <section className="mx-auto flex w-full max-w-6xl min-w-0 flex-col gap-6">
-        <header className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+        <header className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="eyebrow">Leaderboard</p>
             <h1 className="mt-2 text-3xl font-bold tracking-tight text-white sm:text-4xl">
@@ -73,8 +77,8 @@ export default function LeaderboardPage() {
             </p>
           </div>
 
-          <label className="flex w-full max-w-sm flex-col gap-1.5 text-sm font-medium text-zinc-300">
-            <span className="flex items-center gap-2 text-xs uppercase tracking-wide text-zinc-500">
+          <label className="leaderboard-search flex w-full flex-col gap-2 text-sm font-medium text-zinc-300 lg:max-w-md">
+            <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-zinc-400">
               <svg
                 aria-hidden="true"
                 className="h-3.5 w-3.5"
@@ -92,7 +96,7 @@ export default function LeaderboardPage() {
               Search players
             </span>
             <input
-              className="input"
+              className="input !min-h-12 !rounded-xl !border-white/[0.12] !bg-white/[0.055] !px-4 shadow-[0_16px_40px_-28px_rgba(0,0,0,0.9)]"
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Filter by username"
               value={search}
@@ -100,7 +104,7 @@ export default function LeaderboardPage() {
           </label>
         </header>
 
-        <section className="card max-w-full overflow-hidden">
+        <section className="card leaderboard-shell max-w-full overflow-hidden">
           {loading && (
             <div className="flex items-center gap-3 p-6 text-sm text-zinc-400">
               <span className="spinner" />
@@ -198,20 +202,20 @@ export default function LeaderboardPage() {
                   );
                 })}
               </div>
-              <div className="hidden overflow-x-auto md:block">
-                <table className="pro-table min-w-[760px]">
+              <div className="hidden max-w-full px-3 pb-3 md:block lg:px-4 lg:pb-4">
+                <table className="pro-table leaderboard-table w-full table-fixed">
                   <thead>
                     <tr>
-                      <th className="w-20">Rank</th>
-                      <th>Username</th>
-                      <th>Ranking Score</th>
-                      <th>Average</th>
-                      <th>Date Achieved</th>
-                      <th className="text-right">Compare</th>
+                      <th className="w-[12%]">Rank</th>
+                      <th className="w-[28%]">Username</th>
+                      <th className="w-[17%]">Ranking Score</th>
+                      <th className="w-[17%]">Average</th>
+                      <th className="w-[16%]">Date</th>
+                      <th className="w-[10%] text-right">Compare</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredEntries.map((entry) => {
+                    {visibleDesktopEntries.map((entry) => {
                       const rank =
                         entries.findIndex(
                           (leaderboardEntry) =>
@@ -220,7 +224,10 @@ export default function LeaderboardPage() {
                       const medal = rankMedal(rank);
 
                       return (
-                        <tr key={entry.username}>
+                        <tr
+                          className={medal ? `leaderboard-top-${rank}` : ""}
+                          key={entry.username}
+                        >
                           <td>
                             <span
                               className={`inline-flex min-w-9 justify-center rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 font-bold text-white ring-1 ${
@@ -231,11 +238,11 @@ export default function LeaderboardPage() {
                             </span>
                           </td>
                           <td className="font-semibold text-white">
-                            <span className="flex items-center gap-2">
-                              {entry.username}
+                            <span className="flex min-w-0 items-center gap-2">
+                              <span className="truncate">{entry.username}</span>
                               {rank <= 3 && (
                                 <span
-                                  className={`rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 text-xs font-semibold ${medal.text}`}
+                                  className={`shrink-0 rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 text-xs font-semibold ${medal.text}`}
                                 >
                                   Top {rank}
                                 </span>
@@ -275,6 +282,19 @@ export default function LeaderboardPage() {
                     })}
                   </tbody>
                 </table>
+                {filteredEntries.length > 10 && (
+                  <div className="flex justify-center border-t border-white/[0.07] px-4 pb-2 pt-5">
+                    <button
+                      className="btn btn-ghost"
+                      onClick={() => setShowAllDesktop((current) => !current)}
+                      type="button"
+                    >
+                      {showAllDesktop
+                        ? "Show Top 10"
+                        : `View More (${filteredEntries.length - 10})`}
+                    </button>
+                  </div>
+                )}
               </div>
             </>
           )}

@@ -142,17 +142,18 @@ body::before {
 .card {
   position: relative;
   border-radius: var(--radius-lg);
-  border: 1px solid var(--border);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   background:
     linear-gradient(
       180deg,
-      rgba(255, 255, 255, 0.025),
-      rgba(255, 255, 255, 0) 40%
+      rgba(255, 255, 255, 0.045),
+      rgba(255, 255, 255, 0.012) 48%,
+      rgba(255, 255, 255, 0.004)
     ),
     var(--surface-1);
   box-shadow:
-    0 1px 0 0 rgba(255, 255, 255, 0.03) inset,
-    0 20px 40px -28px rgba(0, 0, 0, 0.8);
+    0 1px 0 0 rgba(255, 255, 255, 0.055) inset,
+    0 24px 56px -34px rgba(0, 0, 0, 0.9);
 }
 
 .card-hover {
@@ -270,6 +271,42 @@ body::before {
   border-color: var(--border-strong);
 }
 
+.btn-logout {
+  border: 1px solid rgba(248, 113, 113, 0.28);
+  background:
+    linear-gradient(180deg, rgba(248, 113, 113, 0.16), rgba(248, 113, 113, 0.08)),
+    rgba(127, 29, 29, 0.16);
+  color: #fecaca;
+  box-shadow:
+    0 12px 30px -20px rgba(248, 113, 113, 0.6),
+    0 1px 0 rgba(255, 255, 255, 0.08) inset;
+}
+
+.btn-logout:hover:not(:disabled) {
+  border-color: rgba(252, 165, 165, 0.42);
+  background:
+    linear-gradient(180deg, rgba(248, 113, 113, 0.22), rgba(248, 113, 113, 0.12)),
+    rgba(127, 29, 29, 0.22);
+  color: #fee2e2;
+}
+
+.btn-save-prompt {
+  min-height: 3rem;
+  border: 1px solid rgba(110, 231, 183, 0.35);
+  background:
+    linear-gradient(180deg, #6ee7b7, #10b981);
+  color: #042f1c;
+  box-shadow:
+    0 18px 44px -22px rgba(52, 211, 153, 0.9),
+    0 1px 0 rgba(255, 255, 255, 0.35) inset;
+}
+
+.btn-save-prompt:hover:not(:disabled) {
+  background:
+    linear-gradient(180deg, #a7f3d0, #34d399);
+  transform: translateY(-1px);
+}
+
 /* --- Pills / badges / chips --------------------------------- */
 .pill {
   display: inline-flex;
@@ -336,6 +373,127 @@ body::before {
 
 .pro-table tbody tr:last-child td {
   border-bottom: none;
+}
+
+/* --- Leaderboard desktop polish ---------------------------- */
+.leaderboard-shell {
+  border-color: rgba(255, 255, 255, 0.13);
+}
+
+.leaderboard-search {
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: rgba(255, 255, 255, 0.025);
+  padding: 0.875rem;
+  box-shadow: 0 20px 50px -34px rgba(0, 0, 0, 0.85);
+}
+
+.leaderboard-table {
+  border-collapse: separate;
+  border-spacing: 0 0.625rem;
+}
+
+.leaderboard-table thead th {
+  background: transparent;
+  border-bottom: none;
+  padding: 1.125rem 1rem 0.625rem;
+}
+
+.leaderboard-table tbody td {
+  background: rgba(255, 255, 255, 0.027);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.055);
+  border-top: 1px solid rgba(255, 255, 255, 0.055);
+  padding: 1.125rem 1rem;
+  vertical-align: middle;
+}
+
+.leaderboard-table tbody td:first-child {
+  border-left: 1px solid rgba(255, 255, 255, 0.055);
+  border-radius: var(--radius) 0 0 var(--radius);
+}
+
+.leaderboard-table tbody td:last-child {
+  border-right: 1px solid rgba(255, 255, 255, 0.055);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+.leaderboard-table tbody tr {
+  transition:
+    transform 180ms ease,
+    filter 180ms ease;
+}
+
+.leaderboard-table tbody tr:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+}
+
+.leaderboard-table tbody tr.leaderboard-top-1 td {
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.14), rgba(255, 255, 255, 0.035));
+  border-color: rgba(245, 158, 11, 0.26);
+}
+
+.leaderboard-table tbody tr.leaderboard-top-2 td {
+  background: linear-gradient(90deg, rgba(212, 212, 216, 0.11), rgba(255, 255, 255, 0.032));
+  border-color: rgba(212, 212, 216, 0.18);
+}
+
+.leaderboard-table tbody tr.leaderboard-top-3 td {
+  background: linear-gradient(90deg, rgba(251, 146, 60, 0.12), rgba(255, 255, 255, 0.032));
+  border-color: rgba(251, 146, 60, 0.20);
+}
+
+/* --- Admin dashboard hierarchy ----------------------------- */
+.admin-section {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.052), rgba(255, 255, 255, 0.012) 52%),
+    rgba(13, 16, 22, 0.92);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.06) inset,
+    0 26px 70px -38px rgba(0, 0, 0, 0.95);
+}
+
+.queue-card {
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.014)),
+    rgba(255, 255, 255, 0.026);
+  box-shadow: 0 16px 38px -30px rgba(0, 0, 0, 0.9);
+}
+
+.queue-table-wrap {
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.018);
+}
+
+.admin-queue-table {
+  border-collapse: separate;
+  border-spacing: 0 0.5rem;
+  padding: 0 0.75rem 0.75rem;
+}
+
+.admin-queue-table thead th {
+  background: transparent;
+  border-bottom: none;
+  padding-top: 1rem;
+}
+
+.admin-queue-table tbody td {
+  background: rgba(255, 255, 255, 0.026);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.055);
+  border-top: 1px solid rgba(255, 255, 255, 0.055);
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
+.admin-queue-table tbody td:first-child {
+  border-left: 1px solid rgba(255, 255, 255, 0.055);
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+}
+
+.admin-queue-table tbody td:last-child {
+  border-right: 1px solid rgba(255, 255, 255, 0.055);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
 }
 
 /* ============================================================
