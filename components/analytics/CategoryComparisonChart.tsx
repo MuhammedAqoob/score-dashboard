@@ -16,6 +16,16 @@ type CategoryComparisonChartProps = {
   data: CategoryComparisonItem[];
 };
 
+const tooltipStyle = {
+  background: "rgba(9, 9, 11, 0.95)",
+  border: "1px solid rgba(255,255,255,0.10)",
+  borderRadius: 10,
+  color: "#f4f4f5",
+  fontSize: 12,
+  padding: "8px 12px",
+  boxShadow: "0 20px 40px -20px rgba(0,0,0,0.8)",
+} as const;
+
 function getChartHeight(categoryCount: number) {
   return Math.max(440, categoryCount * 66 + 72);
 }
@@ -60,38 +70,33 @@ export function CategoryComparisonChart({ data }: CategoryComparisonChartProps) 
         >
           <CartesianGrid
             horizontal={false}
-            stroke="#27272a"
+            stroke="rgba(255,255,255,0.06)"
             strokeDasharray="3 3"
           />
           <XAxis
             domain={[0, 100]}
-            stroke="#71717a"
+            stroke="rgba(255,255,255,0.20)"
             tick={{ fill: "#a1a1aa", fontSize: 12 }}
             type="number"
           />
           <YAxis
             dataKey="name"
             interval={0}
-            stroke="#71717a"
+            stroke="rgba(255,255,255,0.20)"
             tick={{ fill: "#d4d4d8", fontSize: 11 }}
             tickFormatter={formatAxisLabel}
             type="category"
             width={96}
           />
           <Tooltip
-            contentStyle={{
-              background: "#09090b",
-              border: "1px solid #27272a",
-              borderRadius: 8,
-              color: "#f4f4f5",
-            }}
-            cursor={{ fill: "rgba(63, 63, 70, 0.24)" }}
+            contentStyle={tooltipStyle}
+            cursor={{ fill: "rgba(255, 255, 255, 0.04)" }}
           />
           <Legend wrapperStyle={{ color: "#d4d4d8", fontSize: 12 }} />
           <Bar
             animationDuration={700}
             dataKey="today"
-            fill="#22c55e"
+            fill="#34d399"
             name="Today"
             radius={[0, 8, 8, 0]}
           />

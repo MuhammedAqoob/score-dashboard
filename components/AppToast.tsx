@@ -10,14 +10,14 @@ export function AppToast({ message, tone = "success" }: AppToastProps) {
 
   const iconClasses =
     tone === "success"
-      ? "border-emerald-700/60 bg-emerald-500 text-zinc-950"
-      : "border-zinc-700 bg-zinc-800 text-zinc-100";
+      ? "bg-emerald-500 text-emerald-950"
+      : "bg-zinc-700 text-zinc-100";
 
   return (
-    <div className="fixed bottom-4 left-4 z-[70] animate-[toast-in_180ms_ease-out] rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm font-semibold text-zinc-100 shadow-2xl shadow-black/40">
-      <div className="flex items-center gap-3">
+    <div className="fixed bottom-5 left-1/2 z-[70] -translate-x-1/2 animate-[toast-in_180ms_ease-out] sm:left-5 sm:translate-x-0">
+      <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-zinc-900/90 px-4 py-3 text-sm font-semibold text-zinc-100 shadow-2xl shadow-black/50 backdrop-blur-xl">
         <span
-          className={`flex h-6 w-6 items-center justify-center rounded-full border text-xs ${iconClasses}`}
+          className={`flex h-6 w-6 items-center justify-center rounded-full text-xs ${iconClasses}`}
         >
           ✓
         </span>

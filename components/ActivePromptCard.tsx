@@ -27,47 +27,70 @@ export function ActivePromptCard({ prompt }: ActivePromptCardProps) {
     try {
       await navigator.clipboard.writeText(prompt.content);
       setCopyMessage("Prompt copied.");
+      window.setTimeout(() => setCopyMessage(""), 1800);
     } catch {
       setCopyMessage("Could not copy prompt.");
     }
   };
 
   return (
-    <article className="rounded-lg border border-zinc-800 bg-zinc-900 p-5">
-      <div className="flex flex-col gap-4 border-b border-zinc-800 pb-4 sm:flex-row sm:items-start sm:justify-between">
+    <article className="card overflow-hidden">
+      <div className="flex flex-col gap-4 border-b border-white/[0.07] p-5 sm:flex-row sm:items-start sm:justify-between sm:p-6">
         <div>
-          <p className="text-sm font-medium text-emerald-400">
-            Daily Prompt
-          </p>
-          <h1 className="mt-1 text-2xl font-semibold">{prompt.title}</h1>
+          <p className="eyebrow">Daily Prompt</p>
+          <h1 className="mt-2 text-2xl font-semibold tracking-tight">
+            {prompt.title}
+          </h1>
         </div>
 
         <button
-          className="rounded-md bg-emerald-500 px-4 py-2 text-sm font-semibold text-zinc-950"
+          className="btn btn-primary shrink-0"
           onClick={handleCopy}
           type="button"
         >
+          <svg
+            aria-hidden="true"
+            className="h-4 w-4"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            viewBox="0 0 24 24"
+          >
+            <path
+              d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
           Copy Prompt
         </button>
       </div>
 
-      <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
-        <div>
-          <dt className="text-zinc-400">Version</dt>
-          <dd className="mt-1 font-medium">v{prompt.version}</dd>
+      <dl className="grid gap-4 p-5 text-sm sm:grid-cols-2 sm:p-6">
+        <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] px-4 py-3">
+          <dt className="text-xs text-zinc-500">Version</dt>
+          <dd className="mt-1 font-semibold text-white">
+            v{prompt.version}
+          </dd>
         </div>
-        <div>
-          <dt className="text-zinc-400">Created</dt>
-          <dd className="mt-1 font-medium">{formatDate(prompt.createdAt)}</dd>
+        <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] px-4 py-3">
+          <dt className="text-xs text-zinc-500">Created</dt>
+          <dd className="mt-1 font-semibold text-white">
+            {formatDate(prompt.createdAt)}
+          </dd>
         </div>
       </dl>
 
-      <pre className="mt-5 whitespace-pre-wrap rounded-md border border-zinc-800 bg-zinc-950 p-4 text-sm leading-6 text-zinc-100">
-        {prompt.content}
-      </pre>
+      <div className="px-5 pb-5 sm:px-6 sm:pb-6">
+        <pre className="max-h-[60vh] overflow-auto whitespace-pre-wrap rounded-xl border border-white/[0.07] bg-[var(--surface-0)] p-4 font-mono text-[13px] leading-6 text-zinc-200">
+          {prompt.content}
+        </pre>
+      </div>
 
       {copyMessage && (
-        <p className="mt-3 text-sm text-zinc-300">{copyMessage}</p>
+        <div className="border-t border-white/[0.07] px-5 py-3 text-sm font-medium text-emerald-300 sm:px-6">
+          {copyMessage}
+        </div>
       )}
     </article>
   );

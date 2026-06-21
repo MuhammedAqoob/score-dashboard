@@ -74,83 +74,91 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-zinc-950 px-6 py-10 text-zinc-50">
-      <section className="mx-auto flex w-full max-w-md flex-col gap-6">
-        <div>
-          <p className="text-sm font-medium text-emerald-400">
-            Anonymous Firebase UID ready
-          </p>
-          <h1 className="mt-1 text-3xl font-semibold">Score Board</h1>
+    <main className="flex min-h-screen items-center justify-center px-4 py-10 text-zinc-50">
+      <section className="w-full max-w-md animate-fade-in-up">
+        <div className="mb-8 text-center">
+          <div className="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 text-lg font-bold text-emerald-950 shadow-lg shadow-emerald-500/25">
+            S
+          </div>
+          <p className="eyebrow text-emerald-400">Anonymous Firebase UID ready</p>
+          <h1 className="mt-2 text-3xl font-semibold tracking-tight">
+            Welcome back
+          </h1>
           <p className="mt-2 text-sm text-zinc-400">
-            Log in with your app username and password.
+            Log in with your app username and password to continue.
           </p>
         </div>
 
-        <div className="grid grid-cols-2 rounded-lg border border-zinc-800 bg-zinc-900 p-1">
-          <button
-            className={`cursor-pointer rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-              mode === "login"
-                ? "bg-emerald-500 text-zinc-950"
-                : "text-zinc-300 hover:bg-zinc-800"
-            }`}
-            type="button"
-            onClick={() => handleModeChange("login")}
+        <div className="card p-5">
+          <div className="mb-5 grid grid-cols-2 gap-1 rounded-xl border border-white/[0.07] bg-white/[0.02] p-1">
+            <button
+              className={`cursor-pointer rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+                mode === "login"
+                  ? "bg-white/[0.08] text-white shadow-sm ring-1 ring-white/10"
+                  : "text-zinc-400 hover:text-zinc-100"
+              }`}
+              type="button"
+              onClick={() => handleModeChange("login")}
+            >
+              Login
+            </button>
+            <button
+              className={`cursor-pointer rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+                mode === "signup"
+                  ? "bg-white/[0.08] text-white shadow-sm ring-1 ring-white/10"
+                  : "text-zinc-400 hover:text-zinc-100"
+              }`}
+              type="button"
+              onClick={() => handleModeChange("signup")}
+            >
+              Signup
+            </button>
+          </div>
+
+          <form
+            className="flex flex-col gap-4"
+            onSubmit={handleSubmit}
           >
-            Login
-          </button>
-          <button
-            className={`cursor-pointer rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-              mode === "signup"
-                ? "bg-emerald-500 text-zinc-950"
-                : "text-zinc-300 hover:bg-zinc-800"
-            }`}
-            type="button"
-            onClick={() => handleModeChange("signup")}
-          >
-            Signup
-          </button>
+            <label className="flex flex-col gap-1.5 text-sm font-medium text-zinc-200">
+              Username
+              <input
+                className="input"
+                onChange={(event) => setUsername(event.target.value)}
+                onKeyDown={handleUsernameKeyDown}
+                placeholder="your-username"
+                value={username}
+              />
+            </label>
+
+            <label className="flex flex-col gap-1.5 text-sm font-medium text-zinc-200">
+              Password
+              <input
+                className="input"
+                placeholder="••••••••"
+                ref={passwordInputRef}
+                onChange={(event) => setPassword(event.target.value)}
+                type="password"
+                value={password}
+              />
+            </label>
+
+            <button
+              className="btn btn-primary mt-1 w-full"
+              disabled={submitting}
+              type="submit"
+            >
+              {submitting && <span className="spinner !h-4 !w-4 !border-emerald-950/40 !border-t-emerald-950" />}
+              {submitting
+                ? "Please wait..."
+                : mode === "signup"
+                  ? "Create profile"
+                  : "Login"}
+            </button>
+          </form>
         </div>
-
-        <form
-          className="flex flex-col gap-4 rounded-lg border border-zinc-800 bg-zinc-900 p-5"
-          onSubmit={handleSubmit}
-        >
-          <label className="flex flex-col gap-2 text-sm font-medium text-zinc-200">
-            Username
-            <input
-              className="rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-zinc-50 outline-none focus:border-emerald-400"
-              onChange={(event) => setUsername(event.target.value)}
-              onKeyDown={handleUsernameKeyDown}
-              value={username}
-            />
-          </label>
-
-          <label className="flex flex-col gap-2 text-sm font-medium text-zinc-200">
-            Password
-            <input
-              ref={passwordInputRef}
-              className="rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-zinc-50 outline-none focus:border-emerald-400"
-              onChange={(event) => setPassword(event.target.value)}
-              type="password"
-              value={password}
-            />
-          </label>
-
-          <button
-            className="cursor-pointer rounded-md bg-emerald-500 px-4 py-2 font-semibold text-zinc-950 transition-colors hover:bg-emerald-400 active:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-60"
-            disabled={submitting}
-            type="submit"
-          >
-            {submitting
-              ? "Please wait..."
-              : mode === "signup"
-                ? "Create profile"
-                : "Login"}
-          </button>
-        </form>
 
         {(message || error) && (
-          <p className="rounded-md border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm text-zinc-200">
+          <p className="mt-4 rounded-xl border border-white/[0.07] bg-white/[0.03] px-4 py-3 text-sm text-zinc-200 animate-fade-in">
             {message || error}
           </p>
         )}

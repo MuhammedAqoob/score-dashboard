@@ -49,6 +49,44 @@ function buildLatestSubmission(result: SubmissionAnalyticsResult): Submission | 
   };
 }
 
+function StatTile({
+  label,
+  value,
+  accent,
+}: {
+  label: string;
+  value: string;
+  accent?: boolean;
+}) {
+  return (
+    <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-4">
+      <p className="text-xs text-zinc-500">{label}</p>
+      <p
+        className={`mt-2 text-2xl font-bold tracking-tight ${
+          accent ? "text-emerald-400" : "text-white"
+        }`}
+      >
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function ChartPanel({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="card min-w-0 overflow-hidden p-4 sm:p-5">
+      <h3 className="text-lg font-semibold text-white">{title}</h3>
+      <div className="mt-4">{children}</div>
+    </div>
+  );
+}
+
 export function SubmissionAnalyticsPanel({
   result,
   historicalSubmissions,
@@ -81,22 +119,20 @@ export function SubmissionAnalyticsPanel({
     result.validated && activeValidatedSubmissions.length >= 2;
 
   return (
-    <section className="min-w-0 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 p-4 sm:p-5">
-      <div className="flex min-w-0 flex-col gap-4 border-b border-zinc-800 pb-4 sm:flex-row sm:items-start sm:justify-between">
+    <section className="card min-w-0 overflow-hidden p-5 sm:p-6">
+      <div className="flex min-w-0 flex-col gap-4 border-b border-white/[0.07] pb-5 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <p className="text-sm font-medium text-emerald-400">
-            Submission analytics
-          </p>
-          <h2 className="mt-1 text-2xl font-bold text-white">
+          <p className="eyebrow">Submission analytics</p>
+          <h2 className="mt-2 text-2xl font-bold tracking-tight text-white">
             {result.validated ? "Validated result" : "Validation mismatch"}
           </h2>
           <p className="mt-2 break-words text-sm text-zinc-400">{result.message}</p>
         </div>
         <div
-          className={`shrink-0 rounded-lg border px-4 py-3 text-sm ${
+          className={`shrink-0 rounded-xl border px-4 py-3 text-sm font-semibold ${
             result.validated
-              ? "border-emerald-900/70 bg-emerald-950/30 text-emerald-100"
-              : "border-red-900/70 bg-red-950/30 text-red-100"
+              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
+              : "border-red-500/30 bg-red-500/10 text-red-300"
           }`}
         >
           {result.validated ? "Validation passed" : "Validation failed"}
@@ -104,24 +140,19 @@ export function SubmissionAnalyticsPanel({
       </div>
 
       <div className="mt-5 grid gap-3 sm:grid-cols-3">
-        <div className="rounded-lg border border-zinc-800 bg-zinc-950 p-4">
-          <p className="text-sm text-zinc-400">AI-reported score</p>
-          <p className="mt-2 text-2xl font-bold text-white">
-            {result.aiReportedScore ?? "-"}/100
-          </p>
-        </div>
-        <div className="rounded-lg border border-zinc-800 bg-zinc-950 p-4">
-          <p className="text-sm text-zinc-400">Site-calculated score</p>
-          <p className="mt-2 text-2xl font-bold text-emerald-400">
-            {result.calculatedScore}/100
-          </p>
-        </div>
-        <div className="rounded-lg border border-zinc-800 bg-zinc-950 p-4">
-          <p className="text-sm text-zinc-400">Detected categories</p>
-          <p className="mt-2 text-2xl font-bold text-white">
-            {categoryData.length}
-          </p>
-        </div>
+        <StatTile
+          label="AI-reported score"
+          value={`${result.aiReportedScore ?? "-"}/100`}
+        />
+        <StatTile
+          accent
+          label="Site-calculated score"
+          value={`${result.calculatedScore}/100`}
+        />
+        <StatTile
+          label="Detected categories"
+          value={`${categoryData.length}`}
+        />
       </div>
 
       {categoryData.length > 0 && (
@@ -134,7 +165,7 @@ export function SubmissionAnalyticsPanel({
       )}
 
       {!result.validated && (
-        <p className="mt-6 rounded-md border border-red-900/60 bg-red-950/20 px-4 py-3 text-sm text-red-100">
+        <p className="mt-6 rounded-xl border border-red-500/25 bg-red-500/10 px-4 py-3 text-sm text-red-200">
           Analytics charts were skipped because this response did not pass score
           validation. Check the final overall score and category values, then
           submit a corrected response.
@@ -143,32 +174,23 @@ export function SubmissionAnalyticsPanel({
 
       {result.validated && (
         <div className="mt-6 grid min-w-0 gap-4">
-          <div className="min-w-0 overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950 p-3 sm:p-4">
-            <h3 className="text-lg font-semibold text-white">
-              Category score chart
-            </h3>
+          <ChartPanel title="Category score chart">
             <CategoryBarChart data={categoryData} />
-          </div>
+          </ChartPanel>
 
-          <div className="min-w-0 overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950 p-3 sm:p-4">
-            <h3 className="text-lg font-semibold text-white">
-              Today vs average
-            </h3>
+          <ChartPanel title="Today vs average">
             {showAverageAnalytics && comparisonData.length > 0 ? (
               <CategoryComparisonChart data={comparisonData} />
             ) : (
-              <p className="mt-3 text-sm text-zinc-400">
+              <p className="text-sm text-zinc-400">
                 Average analytics will appear after more submissions.
               </p>
             )}
-          </div>
+          </ChartPanel>
 
-          <div className="min-w-0 overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950 p-3 sm:p-4">
-            <h3 className="text-lg font-semibold text-white">
-              Score trend history
-            </h3>
+          <ChartPanel title="Score trend history">
             <ScoreTrendChart data={trendData} />
-          </div>
+          </ChartPanel>
         </div>
       )}
     </section>

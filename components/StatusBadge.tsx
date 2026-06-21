@@ -3,20 +3,42 @@ type StatusBadgeProps = {
   label?: string;
 };
 
-const statusClasses = {
-  approved: "border-emerald-900/70 bg-emerald-950/40 text-emerald-200",
-  pending: "border-amber-900/70 bg-amber-950/40 text-amber-200",
-  revoked: "border-red-900/60 bg-zinc-950 text-red-200",
-  banned: "border-red-900/70 bg-red-950/30 text-red-200",
-  deleted: "border-zinc-700 bg-zinc-950 text-zinc-400",
-  active: "border-zinc-700 bg-zinc-950 text-zinc-200",
-};
+const statusStyles = {
+  approved: {
+    dot: "bg-emerald-400",
+    className:
+      "border-emerald-500/30 bg-emerald-500/10 text-emerald-300",
+  },
+  pending: {
+    dot: "bg-amber-400",
+    className: "border-amber-500/30 bg-amber-500/10 text-amber-300",
+  },
+  revoked: {
+    dot: "bg-red-400",
+    className: "border-red-500/25 bg-red-500/10 text-red-300",
+  },
+  banned: {
+    dot: "bg-red-500",
+    className: "border-red-500/30 bg-red-500/15 text-red-300",
+  },
+  deleted: {
+    dot: "bg-zinc-500",
+    className: "border-white/10 bg-white/[0.04] text-zinc-400",
+  },
+  active: {
+    dot: "bg-sky-400",
+    className: "border-sky-500/25 bg-sky-500/10 text-sky-300",
+  },
+} as const;
 
 export function StatusBadge({ status, label }: StatusBadgeProps) {
+  const style = statusStyles[status];
+
   return (
     <span
-      className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${statusClasses[status]}`}
+      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold ${style.className}`}
     >
+      <span className={`h-1.5 w-1.5 rounded-full ${style.dot}`} />
       {label ?? status[0].toUpperCase() + status.slice(1)}
     </span>
   );

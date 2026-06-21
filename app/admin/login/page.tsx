@@ -35,44 +35,67 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-zinc-950 px-6 text-zinc-50">
-      <form
-        className="flex w-full max-w-sm flex-col gap-4 rounded-lg border border-zinc-800 bg-zinc-900 p-5"
-        onSubmit={handleSubmit}
-      >
-        <div>
-          <p className="text-sm font-medium text-emerald-400">Admin</p>
-          <h1 className="mt-1 text-2xl font-semibold">Login</h1>
+    <main className="flex min-h-screen items-center justify-center px-4 py-10 text-zinc-50">
+      <section className="w-full max-w-sm animate-fade-in-up">
+        <div className="mb-8 text-center">
+          <div className="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] text-lg font-bold text-zinc-100 ring-1 ring-white/5">
+            <svg
+              aria-hidden="true"
+              className="h-6 w-6 text-emerald-400"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+          <p className="eyebrow text-emerald-400">Admin Access</p>
+          <h1 className="mt-2 text-2xl font-semibold tracking-tight">
+            Secure Sign In
+          </h1>
         </div>
 
-        <label className="flex flex-col gap-2 text-sm font-medium text-zinc-200">
-          Username
-          <input
-            className="rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-zinc-50 outline-none focus:border-emerald-400"
-            onChange={(event) => setUsername(event.target.value)}
-            value={username}
-          />
-        </label>
-
-        <label className="flex flex-col gap-2 text-sm font-medium text-zinc-200">
-          Password
-          <input
-            className="rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-zinc-50 outline-none focus:border-emerald-400"
-            onChange={(event) => setPassword(event.target.value)}
-            type="password"
-            value={password}
-          />
-        </label>
-
-        <button
-          className="rounded-md bg-emerald-500 px-4 py-2 font-semibold text-zinc-950"
-          type="submit"
+        <form
+          className="card flex flex-col gap-4 p-5"
+          onSubmit={handleSubmit}
         >
-          Login
-        </button>
+          <label className="flex flex-col gap-1.5 text-sm font-medium text-zinc-200">
+            Username
+            <input
+              className="input"
+              onChange={(event) => setUsername(event.target.value)}
+              placeholder="admin"
+              value={username}
+            />
+          </label>
 
-        {message && <p className="text-sm text-red-200">{message}</p>}
-      </form>
+          <label className="flex flex-col gap-1.5 text-sm font-medium text-zinc-200">
+            Password
+            <input
+              className="input"
+              placeholder="••••••••"
+              onChange={(event) => setPassword(event.target.value)}
+              type="password"
+              value={password}
+            />
+          </label>
+
+          <button className="btn btn-primary mt-1 w-full" type="submit">
+            Login
+          </button>
+
+          {message && (
+            <p className="rounded-lg border border-red-500/25 bg-red-500/10 px-4 py-3 text-sm text-red-200 animate-fade-in">
+              {message}
+            </p>
+          )}
+        </form>
+      </section>
     </main>
   );
 }

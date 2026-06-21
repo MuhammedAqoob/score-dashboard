@@ -9,6 +9,17 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+
+const tooltipStyle = {
+  background: "rgba(9, 9, 11, 0.95)",
+  border: "1px solid rgba(255,255,255,0.10)",
+  borderRadius: 10,
+  color: "#f4f4f5",
+  fontSize: 12,
+  padding: "8px 12px",
+  boxShadow: "0 20px 40px -20px rgba(0,0,0,0.8)",
+} as const;
+
 type ScoreTrendChartProps = {
   data: Array<Record<string, string | number>>;
   dataKey?: string;
@@ -26,31 +37,30 @@ export function ScoreTrendChart({
     <div className="h-[240px] w-full max-w-full min-w-0 overflow-hidden sm:h-[280px]">
       <ResponsiveContainer height="100%" minHeight={1} minWidth={1} width="100%">
         <LineChart data={data} margin={{ bottom: 8, left: 0, right: 8, top: 12 }}>
-          <CartesianGrid stroke="#27272a" strokeDasharray="3 3" />
+          <defs>
+            <linearGradient id="scoreTrendFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#34d399" stopOpacity={0.25} />
+              <stop offset="100%" stopColor="#34d399" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid stroke="rgba(255,255,255,0.06)" strokeDasharray="3 3" />
           <XAxis
             dataKey="date"
-            stroke="#71717a"
+            stroke="rgba(255,255,255,0.20)"
             tick={{ fill: "#a1a1aa", fontSize: 12 }}
           />
           <YAxis
             domain={[0, 100]}
-            stroke="#71717a"
+            stroke="rgba(255,255,255,0.20)"
             tick={{ fill: "#a1a1aa", fontSize: 12 }}
           />
-          <Tooltip
-            contentStyle={{
-              background: "#09090b",
-              border: "1px solid #27272a",
-              borderRadius: 8,
-              color: "#f4f4f5",
-            }}
-          />
+          <Tooltip contentStyle={tooltipStyle} />
           <Line
             activeDot={{ r: 6, stroke: "#bbf7d0", strokeWidth: 2 }}
             dataKey={dataKey}
-            dot={{ fill: "#22c55e", r: 3 }}
+            dot={{ fill: "#34d399", r: 3 }}
             name="Score"
-            stroke="#22c55e"
+            stroke="#34d399"
             strokeWidth={3}
             type="monotone"
           />

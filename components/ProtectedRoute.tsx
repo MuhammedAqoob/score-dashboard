@@ -22,8 +22,8 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
 
   if (error) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-zinc-950 px-6 text-zinc-50">
-        <p className="max-w-md rounded-lg border border-red-900/60 bg-red-950/30 p-4 text-sm text-red-200">
+      <main className="flex min-h-screen items-center justify-center px-6 text-zinc-50">
+        <p className="max-w-md rounded-2xl border border-red-500/25 bg-red-500/10 p-4 text-sm text-red-200">
           {error}
         </p>
       </main>

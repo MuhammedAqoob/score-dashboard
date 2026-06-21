@@ -62,18 +62,33 @@ function toLocalInputValue(timestamp?: Timestamp | null) {
 
 function SectionShell({
   title,
+  description,
+  eyebrow,
   children,
 }: {
   title: string;
+  description?: string;
+  eyebrow?: string;
   children: ReactNode;
 }) {
   return (
-    <section className="min-w-0 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 p-4 sm:p-5">
-      <h2 className="text-xl font-semibold text-white">{title}</h2>
-      {children}
+    <section className="card min-w-0 overflow-hidden p-5 sm:p-6">
+      <div>
+        {eyebrow && <p className="eyebrow">{eyebrow}</p>}
+        <h2 className="mt-1 text-xl font-semibold tracking-tight text-white">
+          {title}
+        </h2>
+        {description && (
+          <p className="mt-1.5 text-sm text-zinc-400">{description}</p>
+        )}
+      </div>
+      <div className="mt-5">{children}</div>
     </section>
   );
 }
+
+const actionBtnBase =
+  "rounded-lg px-3 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50";
 
 function AdminDashboardContent() {
   const { logout } = useAdminAuth();
@@ -272,12 +287,12 @@ function AdminDashboardContent() {
   };
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-zinc-950 px-4 py-6 text-zinc-50 sm:px-6 sm:py-8">
+    <main className="min-h-screen overflow-x-hidden px-4 py-8 text-zinc-50 sm:px-6 sm:py-10">
       <section className="mx-auto flex w-full max-w-7xl min-w-0 flex-col gap-8">
-        <header className="flex flex-col gap-4 border-b border-zinc-800 pb-6 lg:flex-row lg:items-center lg:justify-between">
+        <header className="flex flex-col gap-4 border-b border-white/[0.07] pb-7 lg:flex-row lg:items-center lg:justify-between">
           <div className="min-w-0">
-            <p className="text-sm font-medium text-emerald-400">Admin</p>
-            <h1 className="mt-1 break-words text-3xl font-semibold">
+            <p className="eyebrow">Admin</p>
+            <h1 className="mt-2 break-words text-3xl font-semibold tracking-tight sm:text-4xl">
               Admin Control Center
             </h1>
             <p className="mt-2 text-sm text-zinc-400">
@@ -287,13 +302,13 @@ function AdminDashboardContent() {
 
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <Link
-              className="w-full rounded-md border border-zinc-700 px-4 py-2 text-center text-sm font-semibold text-zinc-100 transition hover:bg-zinc-800 sm:w-auto"
+              className="btn btn-ghost w-full sm:w-auto"
               href="/"
             >
               Homepage
             </Link>
             <button
-              className="w-full rounded-md bg-zinc-100 px-4 py-2 text-sm font-semibold text-zinc-950 transition hover:bg-zinc-300 sm:w-auto"
+              className="btn btn-light w-full sm:w-auto"
               onClick={handleLogout}
               type="button"
             >
@@ -303,11 +318,15 @@ function AdminDashboardContent() {
         </header>
 
         {message && (
-          <p className="rounded-md border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm text-zinc-200">
+          <p className="rounded-xl border border-white/[0.07] bg-white/[0.03] px-4 py-3 text-sm text-zinc-200 animate-fade-in">
             {message}
           </p>
         )}
-        {statsError && <p className="text-sm text-red-200">{statsError}</p>}
+        {statsError && (
+          <p className="rounded-xl border border-red-500/25 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+            {statsError}
+          </p>
+        )}
 
         <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <MetricCard label="Total Users" value={statsLoading ? "..." : stats?.totalUsers ?? 0} />
@@ -317,11 +336,11 @@ function AdminDashboardContent() {
           <MetricCard label="Active Submissions" value={statsLoading ? "..." : stats?.activeSubmissions ?? 0} />
           <MetricCard label="Deleted Submissions" value={statsLoading ? "..." : stats?.deletedSubmissions ?? 0} />
           <MetricCard label="Average Platform Score" value={statsLoading ? "..." : `${stats?.averagePlatformScore ?? 0}/100`} />
-          <MetricCard label="Today's Average Score" value={statsLoading ? "..." : `${stats?.todaysAverageScore ?? 0}/100`} />
+          <MetricCard label="Today's Average Score" value={statsLoading ? "..." : `${stats?.todaysAverageScore ?? 0}/100`} positive />
         </div>
 
         {validationEventsError && (
-          <p className="text-sm text-amber-200">
+          <p className="rounded-xl border border-amber-500/25 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
             Validation event analytics unavailable: {validationEventsError}
           </p>
         )}
@@ -331,31 +350,52 @@ function AdminDashboardContent() {
           validationEvents={validationEvents}
         />
 
-        <SectionShell title="Moderation Queue">
-          <div className="mt-4">
-            <h3 className="text-base font-semibold text-white">
-              User Moderation
-            </h3>
-            <p className="mt-1 text-sm text-zinc-400">
-              Review access status, bans, and user-level score summaries.
-            </p>
-          </div>
-          <label className="mt-4 block max-w-sm text-sm text-zinc-300">
-            Search users
+        <SectionShell
+          description="Review access status, bans, and user-level score summaries."
+          eyebrow="Moderation"
+          title="Moderation Queue"
+        >
+          <label className="block max-w-sm text-sm text-zinc-300">
+            <span className="flex items-center gap-2 text-xs uppercase tracking-wide text-zinc-500">
+              <svg
+                aria-hidden="true"
+                className="h-3.5 w-3.5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              Search users
+            </span>
             <input
-              className="mt-2 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-zinc-50 outline-none focus:border-emerald-400"
+              className="input mt-2"
               onChange={(event) => setUserSearch(event.target.value)}
               placeholder="username"
               value={userSearch}
             />
           </label>
 
-          {usersLoading && <p className="mt-4 text-sm text-zinc-400">Loading users...</p>}
+          {usersLoading && (
+            <div className="mt-4 flex items-center gap-3 text-sm text-zinc-400">
+              <span className="spinner" />
+              Loading users...
+            </div>
+          )}
           {(usersError || scoresError) && (
-            <p className="mt-4 text-sm text-red-200">{usersError || scoresError}</p>
+            <p className="mt-4 rounded-xl border border-red-500/25 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+              {usersError || scoresError}
+            </p>
           )}
           {!usersLoading && !usersError && filteredUsers.length === 0 && (
-            <p className="mt-4 text-sm text-zinc-400">No users found.</p>
+            <div className="mt-4 flex flex-col items-center gap-3 rounded-2xl border border-dashed border-white/10 bg-white/[0.015] px-6 py-12 text-center">
+              <p className="text-sm text-zinc-400">No users found.</p>
+            </div>
           )}
           {!usersLoading && !usersError && filteredUsers.length > 0 && (
             <>
@@ -370,7 +410,7 @@ function AdminDashboardContent() {
 
                   return (
                     <article
-                      className="min-w-0 rounded-xl border border-zinc-800 bg-zinc-950 p-4"
+                      className="min-w-0 rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4"
                       key={user.id}
                     >
                       <div className="flex min-w-0 items-start justify-between gap-3">
@@ -392,7 +432,7 @@ function AdminDashboardContent() {
                         <label className="text-xs font-medium text-zinc-400">
                           Ban until
                           <input
-                            className="mt-1 w-full min-w-0 rounded-md border border-zinc-700 bg-zinc-900 px-2 py-2 text-sm text-zinc-50"
+                            className="input mt-1"
                             onChange={(event) =>
                               setBanDrafts({
                                 ...banDrafts,
@@ -409,7 +449,7 @@ function AdminDashboardContent() {
                         <label className="text-xs font-medium text-zinc-400">
                           Ban reason
                           <input
-                            className="mt-1 w-full min-w-0 rounded-md border border-zinc-700 bg-zinc-900 px-2 py-2 text-sm text-zinc-50"
+                            className="input mt-1"
                             onChange={(event) =>
                               setBanDrafts({
                                 ...banDrafts,
@@ -426,16 +466,16 @@ function AdminDashboardContent() {
                       </div>
 
                       <div className="mt-4 grid grid-cols-2 gap-2">
-                        <button className="rounded-md bg-emerald-500 px-3 py-2 text-sm font-semibold text-zinc-950 hover:bg-emerald-400" onClick={() => handleUserStatus(user, "approved")} type="button">
+                        <button className={`${actionBtnBase} bg-emerald-500 text-emerald-950 hover:bg-emerald-400`} onClick={() => handleUserStatus(user, "approved")} type="button">
                           Approve
                         </button>
-                        <button className="rounded-md border border-amber-700/60 px-3 py-2 text-sm font-semibold text-amber-100 hover:bg-amber-950/30" onClick={() => handleUserStatus(user, "revoked")} type="button">
+                        <button className={`${actionBtnBase} border border-amber-500/30 text-amber-200 hover:bg-amber-500/10`} onClick={() => handleUserStatus(user, "revoked")} type="button">
                           Revoke
                         </button>
-                        <button className="rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white hover:bg-red-500" onClick={() => handleBanUser(user)} type="button">
+                        <button className={`${actionBtnBase} bg-red-500 text-white hover:bg-red-400`} onClick={() => handleBanUser(user)} type="button">
                           Ban
                         </button>
-                        <button className="rounded-md border border-zinc-700 px-3 py-2 text-sm font-semibold text-zinc-200 hover:bg-zinc-800" onClick={() => handleUnbanUser(user)} type="button">
+                        <button className={`${actionBtnBase} border border-white/10 text-zinc-200 hover:bg-white/[0.06]`} onClick={() => handleUnbanUser(user)} type="button">
                           Unban
                         </button>
                       </div>
@@ -444,16 +484,16 @@ function AdminDashboardContent() {
                 })}
               </div>
 
-              <div className="mt-4 hidden max-w-full overflow-x-auto rounded-lg border border-zinc-800 md:block">
-                <table className="w-full min-w-[980px] text-left text-sm">
-                  <thead className="sticky top-0 bg-zinc-950 text-zinc-400">
+              <div className="mt-4 hidden max-w-full overflow-x-auto rounded-2xl border border-white/[0.07] md:block">
+                <table className="pro-table min-w-[980px]">
+                  <thead>
                     <tr>
-                      <th className="border-b border-zinc-800 py-2">Username</th>
-                      <th className="border-b border-zinc-800 py-2">Status</th>
-                      <th className="border-b border-zinc-800 py-2">Average</th>
-                      <th className="border-b border-zinc-800 py-2">Ban Until</th>
-                      <th className="border-b border-zinc-800 py-2">Reason</th>
-                      <th className="border-b border-zinc-800 py-2">Actions</th>
+                      <th>Username</th>
+                      <th>Status</th>
+                      <th>Average</th>
+                      <th>Ban Until</th>
+                      <th>Reason</th>
+                      <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -467,20 +507,20 @@ function AdminDashboardContent() {
 
                       return (
                         <tr key={user.id}>
-                          <td className="border-b border-zinc-800 py-3 font-medium text-white">
+                          <td className="font-medium text-white">
                             {user.username}
                           </td>
-                          <td className="border-b border-zinc-800 py-3">
+                          <td>
                             <StatusBadge status={status} />
                           </td>
-                          <td className="border-b border-zinc-800 py-3">
+                          <td>
                             {scoresLoading
                               ? "..."
                               : `${userScore?.averageScore ?? 0}/100 (${userScore?.submissionCount ?? 0})`}
                           </td>
-                          <td className="border-b border-zinc-800 py-3">
+                          <td>
                             <input
-                              className="w-48 rounded-md border border-zinc-700 bg-zinc-950 px-2 py-1 text-zinc-50"
+                              className="input !w-48 !py-1.5"
                               onChange={(event) =>
                                 setBanDrafts({
                                   ...banDrafts,
@@ -494,9 +534,9 @@ function AdminDashboardContent() {
                               value={draft.until}
                             />
                           </td>
-                          <td className="border-b border-zinc-800 py-3">
+                          <td>
                             <input
-                              className="w-56 rounded-md border border-zinc-700 bg-zinc-950 px-2 py-1 text-zinc-50"
+                              className="input !w-56 !py-1.5"
                               onChange={(event) =>
                                 setBanDrafts({
                                   ...banDrafts,
@@ -510,18 +550,18 @@ function AdminDashboardContent() {
                               value={draft.reason}
                             />
                           </td>
-                          <td className="border-b border-zinc-800 py-3">
+                          <td>
                             <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-                              <button className="rounded-md bg-emerald-500 px-3 py-1 font-semibold text-zinc-950 hover:bg-emerald-400" onClick={() => handleUserStatus(user, "approved")} type="button">
+                              <button className={`${actionBtnBase} !px-3 !py-1.5 bg-emerald-500 text-emerald-950 hover:bg-emerald-400`} onClick={() => handleUserStatus(user, "approved")} type="button">
                                 Approve
                               </button>
-                              <button className="rounded-md border border-amber-700/60 px-3 py-1 font-semibold text-amber-100 hover:bg-amber-950/30" onClick={() => handleUserStatus(user, "revoked")} type="button">
+                              <button className={`${actionBtnBase} !px-3 !py-1.5 border border-amber-500/30 text-amber-200 hover:bg-amber-500/10`} onClick={() => handleUserStatus(user, "revoked")} type="button">
                                 Revoke
                               </button>
-                              <button className="rounded-md bg-red-600 px-3 py-1 font-semibold text-white hover:bg-red-500" onClick={() => handleBanUser(user)} type="button">
+                              <button className={`${actionBtnBase} !px-3 !py-1.5 bg-red-500 text-white hover:bg-red-400`} onClick={() => handleBanUser(user)} type="button">
                                 Ban
                               </button>
-                              <button className="rounded-md border border-zinc-700 px-3 py-1 font-semibold text-zinc-200 hover:bg-zinc-800" onClick={() => handleUnbanUser(user)} type="button">
+                              <button className={`${actionBtnBase} !px-3 !py-1.5 border border-white/10 text-zinc-200 hover:bg-white/[0.06]`} onClick={() => handleUnbanUser(user)} type="button">
                                 Unban
                               </button>
                             </div>
@@ -535,7 +575,7 @@ function AdminDashboardContent() {
               {filteredUsers.length > ADMIN_PREVIEW_LIMIT && (
                 <div className="mt-4 flex justify-center">
                   <button
-                    className="rounded-md border border-zinc-700 px-4 py-2 text-sm font-semibold text-zinc-200 transition hover:bg-zinc-800"
+                    className="btn btn-ghost"
                     onClick={() => setShowAllUsers((current) => !current)}
                     type="button"
                   >
@@ -549,21 +589,52 @@ function AdminDashboardContent() {
           )}
         </SectionShell>
 
-        <SectionShell title="Submission Review">
-          <label className="mt-4 block max-w-sm text-sm text-zinc-300">
-            Search submissions
+        <SectionShell
+          eyebrow="Review"
+          title="Submission Review"
+          description="Edit scores, soft-delete, or restore validated submissions."
+        >
+          <label className="block max-w-sm text-sm text-zinc-300">
+            <span className="flex items-center gap-2 text-xs uppercase tracking-wide text-zinc-500">
+              <svg
+                aria-hidden="true"
+                className="h-3.5 w-3.5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              Search submissions
+            </span>
             <input
-              className="mt-2 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-zinc-50 outline-none focus:border-emerald-400"
+              className="input mt-2"
               onChange={(event) => setSubmissionSearch(event.target.value)}
               placeholder="username or day"
               value={submissionSearch}
             />
           </label>
 
-          {submissionsLoading && <p className="mt-4 text-sm text-zinc-400">Loading submissions...</p>}
-          {submissionsError && <p className="mt-4 text-sm text-red-200">{submissionsError}</p>}
+          {submissionsLoading && (
+            <div className="mt-4 flex items-center gap-3 text-sm text-zinc-400">
+              <span className="spinner" />
+              Loading submissions...
+            </div>
+          )}
+          {submissionsError && (
+            <p className="mt-4 rounded-xl border border-red-500/25 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+              {submissionsError}
+            </p>
+          )}
           {!submissionsLoading && !submissionsError && filteredSubmissions.length === 0 && (
-            <p className="mt-4 text-sm text-zinc-400">No submissions found.</p>
+            <div className="mt-4 flex flex-col items-center gap-3 rounded-2xl border border-dashed border-white/10 bg-white/[0.015] px-6 py-12 text-center">
+              <p className="text-sm text-zinc-400">No submissions found.</p>
+            </div>
           )}
           {!submissionsLoading && !submissionsError && filteredSubmissions.length > 0 && (
             <>
@@ -574,7 +645,7 @@ function AdminDashboardContent() {
 
                   return (
                     <article
-                      className={`min-w-0 rounded-xl border border-zinc-800 bg-zinc-950 p-4 ${
+                      className={`min-w-0 rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4 ${
                         status === "deleted" ? "opacity-60" : ""
                       }`}
                       key={submission.id}
@@ -592,11 +663,11 @@ function AdminDashboardContent() {
                       </div>
 
                       <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-                        <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-3">
+                        <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-3">
                           <p className="text-xs text-zinc-500">Score</p>
                           {isEditing ? (
                             <input
-                              className="mt-1 w-full rounded-md border border-zinc-700 bg-zinc-950 px-2 py-1 text-zinc-50"
+                              className="input mt-1"
                               max={100}
                               min={0}
                               onChange={(event) => setScoreDraft(event.target.value)}
@@ -609,7 +680,7 @@ function AdminDashboardContent() {
                             </p>
                           )}
                         </div>
-                        <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-3">
+                        <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-3">
                           <p className="text-xs text-zinc-500">Validation</p>
                           <p className="mt-1 font-semibold text-zinc-100">
                             {submission.validated ? "Validated" : "Failed"}
@@ -626,15 +697,15 @@ function AdminDashboardContent() {
                       <div className="mt-4 grid grid-cols-2 gap-2">
                         {isEditing ? (
                           <>
-                            <button className="rounded-md bg-emerald-500 px-3 py-2 text-sm font-semibold text-zinc-950 hover:bg-emerald-400" onClick={() => handleEditScore(submission)} type="button">
+                            <button className={`${actionBtnBase} bg-emerald-500 text-emerald-950 hover:bg-emerald-400`} onClick={() => handleEditScore(submission)} type="button">
                               Save
                             </button>
-                            <button className="rounded-md border border-zinc-700 px-3 py-2 text-sm font-semibold text-zinc-200 hover:bg-zinc-800" onClick={() => setEditingSubmissionId("")} type="button">
+                            <button className={`${actionBtnBase} border border-white/10 text-zinc-200 hover:bg-white/[0.06]`} onClick={() => setEditingSubmissionId("")} type="button">
                               Cancel
                             </button>
                           </>
                         ) : (
-                          <button className="rounded-md border border-sky-800/70 px-3 py-2 text-sm font-semibold text-sky-100 hover:bg-sky-950/30" onClick={() => {
+                          <button className={`${actionBtnBase} border border-sky-500/30 text-sky-200 hover:bg-sky-500/10`} onClick={() => {
                             setEditingSubmissionId(submission.id ?? "");
                             setScoreDraft(String(submission.calculatedScore));
                           }} type="button">
@@ -642,11 +713,11 @@ function AdminDashboardContent() {
                           </button>
                         )}
                         {status === "deleted" ? (
-                          <button className="rounded-md border border-zinc-700 px-3 py-2 text-sm font-semibold text-zinc-200 hover:bg-zinc-800" onClick={() => handleDeleteRestore(submission, false)} type="button">
+                          <button className={`${actionBtnBase} border border-white/10 text-zinc-200 hover:bg-white/[0.06]`} onClick={() => handleDeleteRestore(submission, false)} type="button">
                             Restore
                           </button>
                         ) : (
-                          <button className="rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white hover:bg-red-500" onClick={() => handleDeleteRestore(submission, true)} type="button">
+                          <button className={`${actionBtnBase} bg-red-500 text-white hover:bg-red-400`} onClick={() => handleDeleteRestore(submission, true)} type="button">
                             Delete
                           </button>
                         )}
@@ -656,16 +727,16 @@ function AdminDashboardContent() {
                 })}
               </div>
 
-              <div className="mt-4 hidden max-w-full overflow-x-auto rounded-lg border border-zinc-800 md:block">
-                <table className="w-full min-w-[980px] text-left text-sm">
-                  <thead className="sticky top-0 bg-zinc-950 text-zinc-400">
+              <div className="mt-4 hidden max-w-full overflow-x-auto rounded-2xl border border-white/[0.07] md:block">
+                <table className="pro-table min-w-[980px]">
+                  <thead>
                     <tr>
-                      <th className="border-b border-zinc-800 py-2">User</th>
-                      <th className="border-b border-zinc-800 py-2">Day</th>
-                      <th className="border-b border-zinc-800 py-2">Score</th>
-                      <th className="border-b border-zinc-800 py-2">Status</th>
-                      <th className="border-b border-zinc-800 py-2">Submitted</th>
-                      <th className="border-b border-zinc-800 py-2">Actions</th>
+                      <th>User</th>
+                      <th>Day</th>
+                      <th>Score</th>
+                      <th>Status</th>
+                      <th>Submitted</th>
+                      <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -675,12 +746,12 @@ function AdminDashboardContent() {
 
                       return (
                         <tr className={status === "deleted" ? "opacity-50" : ""} key={submission.id}>
-                          <td className="border-b border-zinc-800 py-3 font-medium text-white">{submission.username}</td>
-                          <td className="border-b border-zinc-800 py-3">{submission.dayKey}</td>
-                          <td className="border-b border-zinc-800 py-3">
+                          <td className="font-medium text-white">{submission.username}</td>
+                          <td>{submission.dayKey}</td>
+                          <td>
                             {isEditing ? (
                               <input
-                                className="w-24 rounded-md border border-zinc-700 bg-zinc-950 px-2 py-1 text-zinc-50"
+                                className="input !w-24 !py-1.5"
                                 max={100}
                                 min={0}
                                 onChange={(event) => setScoreDraft(event.target.value)}
@@ -696,23 +767,23 @@ function AdminDashboardContent() {
                               </span>
                             )}
                           </td>
-                          <td className="border-b border-zinc-800 py-3">
+                          <td>
                             <StatusBadge status={status} />
                           </td>
-                          <td className="border-b border-zinc-800 py-3">{formatDate(submission.submittedAt)}</td>
-                          <td className="border-b border-zinc-800 py-3">
+                          <td>{formatDate(submission.submittedAt)}</td>
+                          <td>
                             <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                               {isEditing ? (
                                 <>
-                                  <button className="rounded-md bg-emerald-500 px-3 py-1 font-semibold text-zinc-950 hover:bg-emerald-400" onClick={() => handleEditScore(submission)} type="button">
+                                  <button className={`${actionBtnBase} !px-3 !py-1.5 bg-emerald-500 text-emerald-950 hover:bg-emerald-400`} onClick={() => handleEditScore(submission)} type="button">
                                     Save
                                   </button>
-                                  <button className="rounded-md border border-zinc-700 px-3 py-1 font-semibold text-zinc-200 hover:bg-zinc-800" onClick={() => setEditingSubmissionId("")} type="button">
+                                  <button className={`${actionBtnBase} !px-3 !py-1.5 border border-white/10 text-zinc-200 hover:bg-white/[0.06]`} onClick={() => setEditingSubmissionId("")} type="button">
                                     Cancel
                                   </button>
                                 </>
                               ) : (
-                                <button className="rounded-md border border-sky-800/70 px-3 py-1 font-semibold text-sky-100 hover:bg-sky-950/30" onClick={() => {
+                                <button className={`${actionBtnBase} !px-3 !py-1.5 border border-sky-500/30 text-sky-200 hover:bg-sky-500/10`} onClick={() => {
                                   setEditingSubmissionId(submission.id ?? "");
                                   setScoreDraft(String(submission.calculatedScore));
                                 }} type="button">
@@ -720,11 +791,11 @@ function AdminDashboardContent() {
                                 </button>
                               )}
                               {status === "deleted" ? (
-                                <button className="rounded-md border border-zinc-700 px-3 py-1 font-semibold text-zinc-200 hover:bg-zinc-800" onClick={() => handleDeleteRestore(submission, false)} type="button">
+                                <button className={`${actionBtnBase} !px-3 !py-1.5 border border-white/10 text-zinc-200 hover:bg-white/[0.06]`} onClick={() => handleDeleteRestore(submission, false)} type="button">
                                   Restore
                                 </button>
                               ) : (
-                                <button className="rounded-md bg-red-600 px-3 py-1 font-semibold text-white hover:bg-red-500" onClick={() => handleDeleteRestore(submission, true)} type="button">
+                                <button className={`${actionBtnBase} !px-3 !py-1.5 bg-red-500 text-white hover:bg-red-400`} onClick={() => handleDeleteRestore(submission, true)} type="button">
                                   Delete
                                 </button>
                               )}
@@ -739,7 +810,7 @@ function AdminDashboardContent() {
               {filteredSubmissions.length > ADMIN_PREVIEW_LIMIT && (
                 <div className="mt-4 flex justify-center">
                   <button
-                    className="rounded-md border border-zinc-700 px-4 py-2 text-sm font-semibold text-zinc-200 transition hover:bg-zinc-800"
+                    className="btn btn-ghost"
                     onClick={() =>
                       setShowAllSubmissions((current) => !current)
                     }
@@ -755,15 +826,30 @@ function AdminDashboardContent() {
           )}
         </SectionShell>
 
-        <SectionShell title="Activity Logs">
-          {logsLoading && <p className="mt-4 text-sm text-zinc-400">Loading logs...</p>}
-          {logsError && <p className="mt-4 text-sm text-red-200">{logsError}</p>}
-          {!logsLoading && !logsError && logs.length === 0 && (
-            <p className="mt-4 text-sm text-zinc-400">No moderation activity yet.</p>
+        <SectionShell
+          eyebrow="History"
+          title="Activity Logs"
+          description="A chronological record of moderation actions."
+        >
+          {logsLoading && (
+            <div className="flex items-center gap-3 text-sm text-zinc-400">
+              <span className="spinner" />
+              Loading logs...
+            </div>
           )}
-          <div className="mt-4 max-h-[420px] divide-y divide-zinc-800 overflow-y-auto pr-1">
+          {logsError && (
+            <p className="rounded-xl border border-red-500/25 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+              {logsError}
+            </p>
+          )}
+          {!logsLoading && !logsError && logs.length === 0 && (
+            <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-white/10 bg-white/[0.015] px-6 py-12 text-center">
+              <p className="text-sm text-zinc-400">No moderation activity yet.</p>
+            </div>
+          )}
+          <div className="max-h-[420px] divide-y divide-white/[0.06] overflow-y-auto rounded-xl border border-white/[0.07] pr-1">
             {logs.map((log) => (
-              <div className="grid gap-1 py-3 text-sm sm:grid-cols-[180px_1fr_180px]" key={log.id}>
+              <div className="grid gap-1 px-4 py-3.5 text-sm sm:grid-cols-[180px_1fr_180px]" key={log.id}>
                 <p className="font-semibold capitalize text-zinc-200">{log.actionType.replaceAll("_", " ")}</p>
                 <p className="text-zinc-400">
                   <span className="text-white">{log.targetUsername}</span> - {log.details}
@@ -774,10 +860,19 @@ function AdminDashboardContent() {
           </div>
         </SectionShell>
 
-        <SectionShell title="Prompt Manager">
+        <SectionShell
+          eyebrow="Content"
+          title="Prompt Manager"
+          description="Edit the active prompt. The parser depends on the structured scorecard block."
+        >
           <form className="min-w-0" onSubmit={handleSavePrompt}>
-            {promptLoading && <p className="mt-3 text-sm text-zinc-400">Loading prompt...</p>}
-            <div className="mt-4 rounded-lg border border-amber-900/50 bg-amber-950/20 p-4 text-sm text-amber-100">
+            {promptLoading && (
+              <div className="flex items-center gap-3 text-sm text-zinc-400">
+                <span className="spinner" />
+                Loading prompt...
+              </div>
+            )}
+            <div className="rounded-xl border border-amber-500/30 bg-amber-500/[0.07] p-4 text-sm text-amber-100">
               <p className="font-semibold">Scorecard format is required.</p>
               <p className="mt-1 text-amber-100/80">
                 The parser depends on exact scorecard keys inside
@@ -785,34 +880,35 @@ function AdminDashboardContent() {
                 the top of the prompt output requirements.
               </p>
               <button
-                className="mt-3 rounded-md border border-amber-700/60 px-3 py-1.5 text-xs font-semibold text-amber-50 transition hover:bg-amber-900/30"
+                className="btn btn-ghost mt-3 !min-h-9 !px-3 !text-xs !text-amber-100"
                 onClick={handleUseStructuredDefault}
                 type="button"
               >
                 Load Structured Default
               </button>
             </div>
-            <details className="mt-4 rounded-lg border border-zinc-800 bg-zinc-950 p-4">
+            <details className="mt-4 rounded-xl border border-white/[0.07] bg-white/[0.02] p-4">
               <summary className="cursor-pointer text-sm font-semibold text-zinc-200">
                 Expected AI Output Format
               </summary>
-              <pre className="mt-3 max-h-96 overflow-y-auto whitespace-pre-wrap break-words rounded-md border border-zinc-800 bg-zinc-900 p-3 text-xs leading-5 text-zinc-300">
+              <pre className="mt-3 max-h-96 overflow-y-auto whitespace-pre-wrap break-words rounded-lg border border-white/[0.07] bg-[var(--surface-0)] p-3 font-mono text-xs leading-5 text-zinc-300">
                 {EXPECTED_SCORECARD_FORMAT}
               </pre>
             </details>
-            <label className="mt-4 flex flex-col gap-2 text-sm font-medium text-zinc-200">
+            <label className="mt-4 flex flex-col gap-1.5 text-sm font-medium text-zinc-200">
               Title
-              <input className="w-full max-w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-zinc-50 outline-none focus:border-emerald-400" onChange={(event) => setTitle(event.target.value)} value={titleValue} />
+              <input className="input" onChange={(event) => setTitle(event.target.value)} value={titleValue} />
             </label>
-            <label className="mt-4 flex flex-col gap-2 text-sm font-medium text-zinc-200">
+            <label className="mt-4 flex flex-col gap-1.5 text-sm font-medium text-zinc-200">
               Version
-              <input className="w-full max-w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-zinc-50 outline-none focus:border-emerald-400" min={1} onChange={(event) => setVersion(Number(event.target.value))} type="number" value={versionValue} />
+              <input className="input" min={1} onChange={(event) => setVersion(Number(event.target.value))} type="number" value={versionValue} />
             </label>
-            <label className="mt-4 flex flex-col gap-2 text-sm font-medium text-zinc-200">
+            <label className="mt-4 flex flex-col gap-1.5 text-sm font-medium text-zinc-200">
               Content
-              <textarea className="min-h-80 w-full max-w-full resize-y rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm leading-6 text-zinc-50 outline-none focus:border-emerald-400" onChange={(event) => setContent(event.target.value)} value={contentValue} />
+              <textarea className="input min-h-80 resize-y font-mono leading-6" onChange={(event) => setContent(event.target.value)} value={contentValue} />
             </label>
-            <button className="mt-4 w-full rounded-md bg-emerald-500 px-4 py-2 font-semibold text-zinc-950 hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto" disabled={saving} type="submit">
+            <button className="btn btn-primary mt-5 w-full sm:w-auto" disabled={saving} type="submit">
+              {saving && <span className="spinner !h-4 !w-4 !border-emerald-950/40 !border-t-emerald-950" />}
               {saving ? "Saving..." : "Save Active Prompt"}
             </button>
           </form>

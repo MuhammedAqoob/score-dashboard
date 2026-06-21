@@ -63,8 +63,8 @@ function AnalyticsGraphCard({
   const chartData = scores ? buildCategoryChartData(scores) : [];
 
   return (
-    <article className="min-w-0 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 p-4 sm:p-5">
-      <div className="flex min-w-0 flex-col gap-3 border-b border-zinc-800 pb-4 sm:flex-row sm:items-start sm:justify-between">
+    <article className="card overflow-hidden p-5">
+      <div className="flex min-w-0 flex-col gap-3 border-b border-white/[0.07] pb-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <h3 className="break-words text-lg font-semibold text-white">
             {title}
@@ -72,18 +72,19 @@ function AnalyticsGraphCard({
           {date && <p className="mt-1 text-sm text-zinc-500">{date}</p>}
         </div>
         {overallScore !== undefined && (
-          <div className="rounded-lg border border-emerald-900/60 bg-emerald-950/20 px-3 py-2 text-sm font-semibold text-emerald-200">
-            {overallScore}/100
+          <div className="inline-flex shrink-0 items-baseline gap-0.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 font-semibold text-emerald-300">
+            <span className="text-lg">{overallScore}</span>
+            <span className="text-xs text-emerald-400/70">/100</span>
           </div>
         )}
       </div>
 
       {chartData.length > 0 ? (
-        <div className="mt-4 min-w-0">
+        <div className="mt-5 min-w-0">
           <CategoryBarChart data={chartData} />
         </div>
       ) : (
-        <p className="mt-4 rounded-md border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm text-zinc-400">
+        <p className="mt-4 rounded-xl border border-white/[0.07] bg-white/[0.02] px-4 py-3 text-sm text-zinc-400">
           {emptyMessage}
         </p>
       )}
@@ -164,18 +165,21 @@ function DashboardContent() {
   };
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-zinc-950 px-4 py-6 text-zinc-50 sm:px-6 sm:py-8">
+    <main className="min-h-screen overflow-x-hidden px-4 py-8 text-zinc-50 sm:px-6 sm:py-10">
       <section className="mx-auto flex w-full max-w-6xl min-w-0 flex-col gap-6">
-        <header className="flex flex-col gap-4 border-b border-zinc-800 pb-6 sm:flex-row sm:items-center sm:justify-between">
+        <header className="flex flex-col gap-4 border-b border-white/[0.07] pb-7 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
-            <p className="text-sm font-medium text-emerald-400">Dashboard</p>
-            <h1 className="mt-1 break-words text-3xl font-semibold">
+            <p className="eyebrow">Dashboard</p>
+            <h1 className="mt-2 break-words text-3xl font-semibold tracking-tight sm:text-4xl">
               Welcome, {profile?.username}
             </h1>
+            <p className="mt-2 text-sm text-zinc-400">
+              Your validated scorecards, analytics, and account overview.
+            </p>
           </div>
 
           <button
-            className="w-full cursor-pointer rounded-md bg-zinc-100 px-4 py-2 text-sm font-semibold text-zinc-950 transition-colors hover:bg-zinc-300 active:bg-zinc-400 sm:w-auto"
+            className="btn btn-ghost w-full sm:w-auto"
             onClick={logout}
             type="button"
           >
@@ -184,38 +188,80 @@ function DashboardContent() {
         </header>
 
         <Link
-          className="rounded-xl border border-emerald-900/70 bg-emerald-950/30 p-5 transition-colors hover:border-emerald-500 hover:bg-emerald-950/50"
+          className="card card-hover group flex items-center justify-between gap-4 p-5"
           href="/prompts"
         >
-          <p className="text-sm font-medium text-emerald-400">Daily Prompt</p>
-          <p className="mt-2 text-lg font-semibold">Open current prompt</p>
+          <div className="flex items-center gap-4">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400 ring-1 ring-emerald-500/20">
+              <svg
+                aria-hidden="true"
+                className="h-5 w-5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </span>
+            <div>
+              <p className="eyebrow text-emerald-400">Daily Prompt</p>
+              <p className="mt-1 text-base font-semibold text-white">
+                Open current prompt
+              </p>
+            </div>
+          </div>
+          <span className="text-zinc-500 transition group-hover:translate-x-1 group-hover:text-zinc-300">
+            <svg
+              aria-hidden="true"
+              className="h-5 w-5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M9 5l7 7-7 7"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </span>
         </Link>
 
         <div className="grid min-w-0 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-5">
-            <p className="text-sm text-zinc-400">Username</p>
-            <p className="mt-2 break-words text-xl font-semibold">
+          <div className="card card-hover p-5">
+            <p className="text-xs font-medium text-zinc-400">Username</p>
+            <p className="mt-3 break-words text-xl font-semibold tracking-tight">
               {profile?.username ?? "Unknown"}
             </p>
           </div>
 
-          <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-5">
-            <p className="text-sm text-zinc-400">Score</p>
-            <p className="mt-2 text-xl font-semibold">
-              {submissionsLoading ? "..." : averageScore}
+          <div className="card card-hover p-5">
+            <p className="text-xs font-medium text-zinc-400">Score</p>
+            <p className="mt-3 text-xl font-semibold tracking-tight">
+              {submissionsLoading ? (
+                <span className="inline-block h-6 w-10 animate-pulse rounded bg-white/10 align-middle" />
+              ) : (
+                <span className="text-emerald-400">{averageScore}</span>
+              )}
             </p>
-            <p className="mt-1 text-xs text-zinc-500">
-              {submissionCount} validated submissions
+            <p className="mt-1.5 text-xs text-zinc-500">
+              {submissionCount} validated submission{submissionCount === 1 ? "" : "s"}
             </p>
           </div>
 
-          <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-5">
-            <p className="text-sm text-zinc-400">Status</p>
-            <div className="mt-2">
+          <div className="card card-hover p-5">
+            <p className="text-xs font-medium text-zinc-400">Status</p>
+            <div className="mt-3">
               <StatusBadge status={userStatus} />
             </div>
             {userStatus === "banned" && (
-              <p className="mt-2 text-xs text-red-200">
+              <p className="mt-2.5 text-xs leading-5 text-red-200">
                 {profile?.banReason ? `${profile.banReason}. ` : ""}
                 {profile?.bannedUntil
                   ? `Until ${profile.bannedUntil.toDate().toLocaleString()}`
@@ -224,18 +270,18 @@ function DashboardContent() {
             )}
           </div>
 
-          <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-5">
-            <p className="text-sm text-zinc-400">Created</p>
-            <p className="mt-2 text-xl font-semibold">
+          <div className="card card-hover p-5">
+            <p className="text-xs font-medium text-zinc-400">Created</p>
+            <p className="mt-3 text-xl font-semibold tracking-tight">
               {formatDate(profile?.createdAt)}
             </p>
           </div>
         </div>
 
-        <section className="min-w-0 rounded-xl border border-zinc-800 bg-zinc-900 p-4 sm:p-5">
+        <section className="card min-w-0 p-5 sm:p-6">
           <div>
-            <p className="text-sm font-medium text-emerald-400">Analytics</p>
-            <h2 className="mt-1 text-2xl font-semibold text-white">
+            <p className="eyebrow">Analytics</p>
+            <h2 className="mt-2 text-2xl font-semibold tracking-tight text-white">
               Performance Graphs
             </h2>
             <p className="mt-2 text-sm text-zinc-400">
@@ -245,15 +291,38 @@ function DashboardContent() {
           </div>
 
           {submissionsError && (
-            <p className="mt-4 rounded-md border border-red-900/60 bg-red-950/20 px-4 py-3 text-sm text-red-100">
+            <p className="mt-4 rounded-xl border border-red-500/25 bg-red-500/10 px-4 py-3 text-sm text-red-200">
               {submissionsError}
             </p>
           )}
 
           {!submissionsLoading && !submissionsError && submissionCount === 0 && (
-            <p className="mt-4 rounded-md border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm text-zinc-400">
-              No validated submissions yet.
-            </p>
+            <div className="mt-5 flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-white/10 bg-white/[0.015] px-6 py-12 text-center">
+              <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/[0.04] text-zinc-400">
+                <svg
+                  aria-hidden="true"
+                  className="h-6 w-6"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={1.8}
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M9 17v-6m3 6V8m3 9v-4M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </span>
+              <div>
+                <p className="text-sm font-semibold text-zinc-200">
+                  No validated submissions yet
+                </p>
+                <p className="mt-1 text-sm text-zinc-500">
+                  Submit a scorecard from the home page to start tracking.
+                </p>
+              </div>
+            </div>
           )}
 
           {submissionCount > 0 && (
@@ -290,11 +359,11 @@ function DashboardContent() {
                   title="Average Performance Graph"
                 />
               ) : (
-                <article className="rounded-xl border border-zinc-800 bg-zinc-900 p-4 sm:p-5">
+                <article className="card p-5">
                   <h3 className="text-lg font-semibold text-white">
                     Average Performance Graph
                   </h3>
-                  <p className="mt-4 rounded-md border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm text-zinc-400">
+                  <p className="mt-4 rounded-xl border border-white/[0.07] bg-white/[0.02] px-4 py-3 text-sm text-zinc-400">
                     Average graph requires multiple submissions.
                   </p>
                 </article>
@@ -303,27 +372,41 @@ function DashboardContent() {
           )}
         </section>
 
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-5">
-          <h2 className="font-semibold">Profile Settings</h2>
+        <div className="card p-5 sm:p-6">
+          <h2 className="text-lg font-semibold text-white">Profile Settings</h2>
+          <p className="mt-1 text-sm text-zinc-400">
+            Update your display username.
+          </p>
           <form
             className="mt-4 flex flex-col gap-3 sm:flex-row"
             onSubmit={handleUsernameSave}
           >
             <input
-              className="min-w-0 flex-1 rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-zinc-50 outline-none focus:border-emerald-400"
+              className="input sm:flex-1"
               onChange={(event) => setUsername(event.target.value)}
               value={username}
             />
             <button
-              className="cursor-pointer rounded-md bg-emerald-500 px-4 py-2 font-semibold text-zinc-950 transition-colors hover:bg-emerald-400 active:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-60"
+              className="btn btn-primary sm:w-auto"
               disabled={saving}
               type="submit"
             >
+              {saving && <span className="spinner !h-4 !w-4 !border-emerald-950/40 !border-t-emerald-950" />}
               {saving ? "Saving..." : "Save"}
             </button>
           </form>
 
-          {message && <p className="mt-3 text-sm text-zinc-300">{message}</p>}
+          {message && (
+            <p
+              className={`mt-3 rounded-lg px-3 py-2 text-sm ${
+                message === "Username saved."
+                  ? "bg-emerald-500/10 text-emerald-300"
+                  : "bg-white/[0.04] text-zinc-300"
+              }`}
+            >
+              {message}
+            </p>
+          )}
         </div>
       </section>
     </main>

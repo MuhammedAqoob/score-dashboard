@@ -1,38 +1,445 @@
 @import "tailwindcss";
 
+/* ============================================================
+   Design tokens
+   A single dark-mode-first system used across the whole app.
+   ============================================================ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #07080b;
+  --foreground: #f4f4f5;
+
+  /* Surface ramp (dark-first) */
+  --surface-0: #07080b; /* page base */
+  --surface-1: #0c0e13; /* primary cards */
+  --surface-2: #111419; /* nested / inputs */
+  --surface-3: #161a21; /* raised / hover */
+
+  /* Hairline borders */
+  --border-subtle: rgba(255, 255, 255, 0.07);
+  --border: rgba(255, 255, 255, 0.10);
+  --border-strong: rgba(255, 255, 255, 0.16);
+
+  /* Brand / accent */
+  --accent: #34d399; /* emerald */
+  --accent-strong: #10b981;
+
+  /* Text */
+  --text-muted: #a1a1aa;
+  --text-faint: #71717a;
+
+  /* Radii */
+  --radius-sm: 0.625rem;
+  --radius: 0.875rem;
+  --radius-lg: 1.125rem;
+  --radius-xl: 1.5rem;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: Arial, Helvetica, sans-serif;
-  --font-mono: "Courier New", Courier, monospace;
+  --font-sans: var(--font-inter, "Inter"), system-ui, -apple-system,
+    "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", "Courier New", monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  color-scheme: dark;
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  font-feature-settings: "cv11", "ss01";
+  font-variation-settings: "opsz" 32;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
+/* ============================================================
+   Ambient page background
+   A very subtle radial glow that gives every page depth
+   without distracting. Pointer-events:none so it never blocks.
+   ============================================================ */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      900px 600px at 12% -8%,
+      rgba(52, 211, 153, 0.10),
+      transparent 60%
+    ),
+    radial-gradient(
+      800px 500px at 95% 0%,
+      rgba(99, 102, 241, 0.08),
+      transparent 55%
+    );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* ============================================================
+   Custom scrollbar (premium feel, subtle)
+   ============================================================ */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.14) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.22);
+  background-clip: padding-box;
+}
+
+/* ============================================================
+   Focus ring — visible and accessible everywhere
+   ============================================================ */
+:where(a, button, input, textarea, select, summary, [tabindex]):focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 75%, white);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* ============================================================
+   Reusable component classes
+   Keeping markup readable while enforcing consistency.
+   ============================================================ */
+
+/* --- Cards -------------------------------------------------- */
+.card {
+  position: relative;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.025),
+      rgba(255, 255, 255, 0) 40%
+    ),
+    var(--surface-1);
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.03) inset,
+    0 20px 40px -28px rgba(0, 0, 0, 0.8);
+}
+
+.card-hover {
+  transition:
+    border-color 220ms ease,
+    transform 220ms ease,
+    box-shadow 220ms ease,
+    background-color 220ms ease;
+}
+
+.card-hover:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-2px);
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.05) inset,
+    0 28px 50px -28px rgba(0, 0, 0, 0.85);
+}
+
+/* --- Inputs ------------------------------------------------- */
+.input {
+  width: 100%;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background-color: var(--surface-2);
+  padding: 0.625rem 0.875rem;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  color: var(--foreground);
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    background-color 180ms ease;
+}
+
+.input::placeholder {
+  color: var(--text-faint);
+}
+
+.input:hover:not(:disabled) {
+  border-color: var(--border-strong);
+}
+
+.input:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--accent) 60%, transparent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 16%, transparent);
+  background-color: var(--surface-3);
+}
+
+.input:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* --- Buttons ------------------------------------------------ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  padding: 0 1.25rem;
+  cursor: pointer;
+  transition:
+    transform 120ms ease,
+    background-color 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease,
+    box-shadow 180ms ease,
+    opacity 180ms ease;
+}
+
+.btn:active {
+  transform: scale(0.985);
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #052e1a;
+  box-shadow:
+    0 10px 24px -12px color-mix(in srgb, var(--accent) 80%, transparent),
+    0 1px 0 0 rgba(255, 255, 255, 0.25) inset;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #6ee7b7;
+}
+
+.btn-light {
+  background: #fafafa;
+  color: #09090b;
+}
+
+.btn-light:hover:not(:disabled) {
+  background: #e4e4e7;
+}
+
+.btn-ghost {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  color: #fafafa;
+}
+
+.btn-ghost:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--border-strong);
+}
+
+/* --- Pills / badges / chips --------------------------------- */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  padding: 0.25rem 0.625rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.pill-accent {
+  border-color: color-mix(in srgb, var(--accent) 30%, transparent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  color: #a7f3d0;
+}
+
+/* --- Eyebrow label (small uppercase section title) ---------- */
+.eyebrow {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+/* --- Tables ------------------------------------------------- */
+.pro-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  text-align: left;
+  font-size: 0.875rem;
+}
+
+.pro-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--surface-1);
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 0.75rem;
+  letter-spacing: 0.02em;
+  padding: 0.875rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.pro-table tbody tr {
+  transition: background-color 160ms ease;
+}
+
+.pro-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.pro-table tbody td {
+  padding: 0.875rem 1.25rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.pro-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* ============================================================
+   Keyframes / animations
+   ============================================================ */
 @keyframes toast-in {
   from {
     opacity: 0;
     transform: translate3d(-8px, 12px, 0) scale(0.98);
   }
-
   to {
     opacity: 1;
     transform: translate3d(0, 0, 0) scale(1);
   }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 12px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 480ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-fade-in {
+  animation: fade-in 360ms ease-out both;
+}
+
+.animate-scale-in {
+  animation: scale-in 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* --- Skeleton shimmer block --------------------------------- */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--surface-2);
+}
+
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.06),
+    transparent
+  );
+  animation: shimmer 1.4s infinite;
+}
+
+/* --- Spinner (CSS-only) ------------------------------------- */
+.spinner {
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.16);
+  border-top-color: var(--accent);
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* --- selection color ---------------------------------------- */
+::selection {
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
+  color: #fff;
 }

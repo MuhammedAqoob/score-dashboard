@@ -38,9 +38,7 @@ export function AppNav() {
   };
 
   const activeLinkClass = (isActive: boolean) =>
-    isActive
-      ? "text-white"
-      : "text-zinc-400 hover:text-zinc-100";
+    isActive ? "text-white" : "text-zinc-400 hover:text-zinc-100";
 
   const initials = useMemo(() => {
     if (isAdmin) {
@@ -85,19 +83,22 @@ export function AppNav() {
   };
 
   return (
-    <nav className="sticky top-0 z-30 w-full overflow-visible border-b border-white/10 bg-zinc-950/90 px-4 py-3 text-zinc-50 backdrop-blur-xl sm:px-6">
+    <nav className="sticky top-0 z-30 w-full overflow-visible border-b border-white/[0.07] bg-[#07080b]/80 px-4 py-3 text-zinc-50 backdrop-blur-xl sm:px-6">
       <div className="mx-auto grid w-full max-w-7xl grid-cols-[1fr_auto] items-center gap-4 md:grid-cols-[1fr_auto_1fr]">
         <Link
-          className="text-base font-semibold tracking-normal text-white transition-colors hover:text-zinc-300 sm:text-lg"
+          className="flex items-center gap-2.5 text-base font-semibold tracking-tight text-white transition-colors hover:text-zinc-300"
           href="/"
         >
-          Score Board
+          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 text-sm font-bold text-emerald-950 shadow-lg shadow-emerald-500/20">
+            S
+          </span>
+          <span className="sm:text-lg">Score Board</span>
         </Link>
 
-        <div className="relative hidden w-[440px] grid-cols-3 rounded-full border border-white/10 bg-white/[0.03] p-1 text-sm shadow-sm shadow-black/20 md:grid lg:w-[520px]">
+        <div className="relative hidden w-[440px] grid-cols-3 rounded-full border border-white/[0.07] bg-white/[0.03] p-1 text-sm shadow-sm shadow-black/20 md:grid lg:w-[520px]">
           <span
             aria-hidden="true"
-            className="absolute left-1 top-1 h-[calc(100%-0.5rem)] w-[calc((100%-0.5rem)/3)] rounded-full bg-zinc-800/90 shadow-sm shadow-black/30 ring-1 ring-white/10 transition-transform duration-300 ease-out"
+            className="absolute left-1 top-1 h-[calc(100%-0.5rem)] w-[calc((100%-0.5rem)/3)] rounded-full bg-white/[0.08] shadow-sm shadow-black/30 ring-1 ring-white/10 transition-transform duration-300 ease-out"
             style={navIndicatorStyle}
           />
           {navLinks.map((link, index) => (
@@ -113,7 +114,10 @@ export function AppNav() {
 
         <div className="hidden justify-end md:flex">
           {loading ? (
-            <span className="text-sm text-zinc-500">Checking session...</span>
+            <span className="flex items-center gap-2 text-sm text-zinc-500">
+              <span className="spinner !h-4 !w-4" />
+              Checking session...
+            </span>
           ) : profile || isAdmin ? (
             <div className="relative" ref={menuRef}>
               <button
@@ -130,23 +134,37 @@ export function AppNav() {
               </button>
 
               {profileOpen && (
-                <div className="absolute right-0 top-full z-50 mt-3 w-56 overflow-hidden rounded-lg border border-white/10 bg-zinc-900 shadow-xl shadow-black/40">
-                  <div className="border-b border-zinc-800 px-4 py-3">
+                <div className="absolute right-0 top-full z-50 mt-3 w-60 overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/95 shadow-2xl shadow-black/50 backdrop-blur-xl animate-scale-in origin-top-right">
+                  <div className="border-b border-white/[0.07] px-4 py-3.5">
                     <p className="text-sm font-semibold text-white">
                       {isAdmin ? "Admin" : profile?.username}
                     </p>
                     {profile && userStatus !== "approved" && (
-                      <p className="mt-1 text-xs text-amber-300">
-                        {userStatus[0].toUpperCase() + userStatus.slice(1)}
+                      <p className="mt-1 text-xs capitalize text-amber-300">
+                        {userStatus}
                       </p>
                     )}
                   </div>
 
                   <button
-                    className="w-full cursor-pointer px-4 py-3 text-left text-sm text-zinc-300 transition hover:bg-red-950/40 hover:text-red-200 active:bg-red-950/60"
+                    className="flex w-full cursor-pointer items-center gap-2 px-4 py-3 text-left text-sm text-zinc-300 transition hover:bg-red-500/10 hover:text-red-300 active:bg-red-500/20"
                     onClick={handleLogout}
                     type="button"
                   >
+                    <svg
+                      aria-hidden="true"
+                      className="h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
                     Log Out
                   </button>
                 </div>
@@ -154,7 +172,7 @@ export function AppNav() {
             </div>
           ) : (
             <Link
-              className="cursor-pointer rounded-full bg-zinc-100 px-4 py-2 text-sm font-semibold text-zinc-950 transition hover:bg-zinc-300 active:bg-zinc-400"
+              className="btn btn-light !min-h-10 !px-4 !text-sm"
               href="/login"
             >
               Login / Signup
@@ -185,17 +203,20 @@ export function AppNav() {
         >
           <button
             aria-label="Close navigation menu"
-            className="fixed left-0 top-0 h-screen w-screen cursor-default bg-black/70 backdrop-blur-md"
+            className="fixed left-0 top-0 h-screen w-screen cursor-default bg-black/70 backdrop-blur-md animate-fade-in"
             onClick={() => setSheetOpen(false)}
             type="button"
           />
-          <div className="fixed right-0 top-0 z-[10000] flex h-screen w-[min(22rem,calc(100vw-2rem))] flex-col border-l border-white/15 bg-[#000000] p-5 shadow-2xl shadow-black ring-1 ring-white/10 transition-transform duration-300 ease-out">
+          <div className="fixed right-0 top-0 z-[10000] flex h-screen w-[min(22rem,calc(100vw-2rem))] flex-col border-l border-white/15 bg-[#0a0c10] p-5 shadow-2xl shadow-black ring-1 ring-white/10 transition-transform duration-300 ease-out">
             <div className="flex items-center justify-between gap-4">
               <Link
-                className="text-base font-semibold text-white"
+                className="flex items-center gap-2 text-base font-semibold text-white"
                 href="/"
                 onClick={() => setSheetOpen(false)}
               >
+                <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 text-sm font-bold text-emerald-950">
+                  S
+                </span>
                 Score Board
               </Link>
               <button
@@ -238,14 +259,14 @@ export function AppNav() {
                         {isAdmin ? "Admin" : profile?.username}
                       </p>
                       {profile && userStatus !== "approved" && (
-                        <p className="mt-0.5 text-xs text-amber-300">
-                          {userStatus[0].toUpperCase() + userStatus.slice(1)}
+                        <p className="mt-0.5 text-xs capitalize text-amber-300">
+                          {userStatus}
                         </p>
                       )}
                     </div>
                   </div>
                   <button
-                    className="cursor-pointer rounded-full border border-white/10 px-3 py-2 text-sm font-semibold text-zinc-300 transition hover:bg-red-950/40 hover:text-red-200"
+                    className="cursor-pointer rounded-full border border-white/10 px-3 py-2 text-sm font-semibold text-zinc-300 transition hover:bg-red-500/10 hover:text-red-300"
                     onClick={handleLogout}
                     type="button"
                   >
@@ -254,7 +275,7 @@ export function AppNav() {
                 </div>
               ) : (
                 <Link
-                  className="inline-flex w-full cursor-pointer justify-center rounded-full bg-zinc-100 px-4 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-zinc-300 active:bg-zinc-400"
+                  className="btn btn-light inline-flex w-full justify-center !py-3"
                   href="/login"
                   onClick={() => setSheetOpen(false)}
                 >

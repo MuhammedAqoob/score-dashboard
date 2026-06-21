@@ -31,7 +31,7 @@ type LeaderboardComparisonModalProps = {
 };
 
 const lineColors = [
-  "#22c55e",
+  "#34d399",
   "#38bdf8",
   "#a78bfa",
   "#f59e0b",
@@ -44,6 +44,16 @@ const lineColors = [
   "#d4d4d8",
 ];
 const yAxisTicks = [0, 25, 50, 75, 100];
+
+const tooltipStyle = {
+  background: "rgba(9, 9, 11, 0.95)",
+  border: "1px solid rgba(255,255,255,0.10)",
+  borderRadius: 10,
+  color: "#f4f4f5",
+  fontSize: 12,
+  padding: "8px 12px",
+  boxShadow: "0 20px 40px -20px rgba(0,0,0,0.8)",
+} as const;
 
 function formatAxisLabel(label: string) {
   const labelMap: Record<string, string> = {
@@ -96,8 +106,8 @@ function StatCard({
   value: string | number;
 }) {
   return (
-    <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
-      <p className="text-sm text-zinc-400">{label}</p>
+    <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-4">
+      <p className="text-xs text-zinc-500">{label}</p>
       <p className="mt-2 text-2xl font-bold text-white">{value}</p>
     </div>
   );
@@ -126,10 +136,10 @@ function ClickableLegend({
 
         return (
           <button
-            className={`inline-flex min-h-10 items-center gap-2 rounded-full border px-3 py-2 text-xs font-semibold transition sm:text-sm ${
+            className={`inline-flex min-h-9 items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition sm:text-sm ${
               selected
-                ? "border-zinc-500 bg-zinc-800 text-white"
-                : "border-zinc-800 bg-zinc-950 text-zinc-300 hover:border-zinc-600 hover:bg-zinc-800"
+                ? "border-white/20 bg-white/[0.08] text-white"
+                : "border-white/[0.07] bg-white/[0.02] text-zinc-300 hover:border-white/15 hover:bg-white/[0.05]"
             } ${dimmed ? "opacity-50" : "opacity-100"}`}
             key={item.key}
             onClick={() => onSelect(selected ? null : item.key)}
@@ -178,7 +188,7 @@ function PeerComparisonChart({
   const [selectedLine, setSelectedLine] = useState<string | null>(null);
   const selectionRef = useRef<HTMLElement>(null);
   const legendItems = [
-    { key: "currentUser", label: currentUsername, color: "#22c55e" },
+    { key: "currentUser", label: currentUsername, color: "#34d399" },
     { key: "selectedUser", label: selectedUsername, color: "#a1a1aa" },
   ];
 
@@ -200,12 +210,12 @@ function PeerComparisonChart({
 
   return (
     <section
-      className="min-w-0 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 p-4"
+      className="card min-w-0 overflow-hidden p-5"
       ref={selectionRef}
     >
       <h3 className="font-semibold text-white">{title}</h3>
       {data.length === 0 ? (
-        <p className="mt-4 rounded-md border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm text-zinc-400">
+        <p className="mt-4 rounded-xl border border-white/[0.07] bg-white/[0.02] px-4 py-3 text-sm text-zinc-400">
           Not enough category data to compare yet.
         </p>
       ) : (
@@ -223,13 +233,13 @@ function PeerComparisonChart({
               >
                 <CartesianGrid
                   vertical={false}
-                  stroke="#27272a"
+                  stroke="rgba(255,255,255,0.06)"
                   strokeDasharray="3 3"
                 />
                 <XAxis
                   dataKey="name"
                   interval={0}
-                  stroke="#71717a"
+                  stroke="rgba(255,255,255,0.20)"
                   tick={{
                     fill: "#d4d4d8",
                     fontSize: 10,
@@ -242,30 +252,25 @@ function PeerComparisonChart({
                 />
                 <YAxis
                   domain={[0, 100]}
-                  stroke="#71717a"
+                  stroke="rgba(255,255,255,0.20)"
                   tick={{ fill: "#a1a1aa", fontSize: 12 }}
                   ticks={yAxisTicks}
                   type="number"
                   width={36}
                 />
                 <Tooltip
-                  contentStyle={{
-                    background: "#09090b",
-                    border: "1px solid #27272a",
-                    borderRadius: 8,
-                    color: "#f4f4f5",
-                  }}
-                  cursor={{ fill: "rgba(63, 63, 70, 0.24)" }}
+                  contentStyle={tooltipStyle}
+                  cursor={{ fill: "rgba(255, 255, 255, 0.04)" }}
                 />
                 <Line
                   animationDuration={700}
                   dataKey="currentUser"
                   name={currentUsername}
-                  stroke="#22c55e"
+                  stroke="#34d399"
                   strokeOpacity={getLineOpacity("currentUser", selectedLine)}
                   strokeWidth={getLineWidth("currentUser", selectedLine)}
                   dot={{
-                    fill: "#22c55e",
+                    fill: "#34d399",
                     opacity: getLineOpacity("currentUser", selectedLine),
                     r: selectedLine === "currentUser" ? 4 : 3,
                   }}
@@ -354,7 +359,7 @@ function TotalComparisonChart({
 
   return (
     <section
-      className="min-w-0 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 p-4"
+      className="card min-w-0 overflow-hidden p-5"
       ref={selectionRef}
     >
       <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
@@ -370,7 +375,7 @@ function TotalComparisonChart({
       </div>
 
       {players.length === 0 ? (
-        <p className="mt-4 rounded-md border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm text-zinc-400">
+        <p className="mt-4 rounded-xl border border-white/[0.07] bg-white/[0.02] px-4 py-3 text-sm text-zinc-400">
           No players available for total comparison.
         </p>
       ) : (
@@ -387,7 +392,7 @@ function TotalComparisonChart({
                 margin={{ bottom: 92, left: 0, right: 12, top: 12 }}
               >
                 <CartesianGrid
-                  stroke="#27272a"
+                  stroke="rgba(255,255,255,0.06)"
                   strokeDasharray="3 3"
                   vertical={false}
                 />
@@ -396,7 +401,7 @@ function TotalComparisonChart({
                   dataKey="name"
                   height={92}
                   interval={0}
-                  stroke="#71717a"
+                  stroke="rgba(255,255,255,0.20)"
                   tick={{
                     fill: "#d4d4d8",
                     fontSize: 10,
@@ -407,20 +412,13 @@ function TotalComparisonChart({
                 />
                 <YAxis
                   domain={[0, 100]}
-                  stroke="#71717a"
+                  stroke="rgba(255,255,255,0.20)"
                   tick={{ fill: "#a1a1aa", fontSize: 12 }}
                   ticks={yAxisTicks}
                   type="number"
                   width={36}
                 />
-                <Tooltip
-                  contentStyle={{
-                    background: "#09090b",
-                    border: "1px solid #27272a",
-                    borderRadius: 8,
-                    color: "#f4f4f5",
-                  }}
-                />
+                <Tooltip contentStyle={tooltipStyle} />
                 {players.map((player, index) => (
                   <Line
                     animationDuration={700}
@@ -524,24 +522,22 @@ export function LeaderboardComparisonModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/70 px-4 py-6 backdrop-blur-sm sm:py-10"
+      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/70 px-4 py-6 backdrop-blur-sm animate-fade-in sm:py-10"
       role="dialog"
       aria-modal="true"
     >
-      <div className="w-full max-w-5xl overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950 shadow-2xl shadow-black/50">
-        <header className="flex flex-col gap-4 border-b border-zinc-800 p-4 sm:flex-row sm:items-start sm:justify-between sm:p-5">
+      <div className="w-full max-w-5xl overflow-hidden rounded-2xl border border-white/10 bg-[#0a0c10] shadow-2xl shadow-black/60 animate-scale-in">
+        <header className="flex flex-col gap-4 border-b border-white/[0.07] p-5 sm:flex-row sm:items-start sm:justify-between sm:p-6">
           <div className="min-w-0">
-            <p className="text-sm font-medium text-emerald-400">
-              Leaderboard comparison
-            </p>
-            <h2 className="mt-1 break-words text-2xl font-bold text-white">
+            <p className="eyebrow">Leaderboard comparison</p>
+            <h2 className="mt-2 break-words text-2xl font-bold tracking-tight text-white">
               {currentUsername
                 ? `${currentUsername} vs ${selectedUsername}`
                 : "Performance comparison"}
             </h2>
           </div>
           <button
-            className="rounded-md border border-zinc-700 px-4 py-2 text-sm font-semibold text-zinc-100 transition hover:bg-zinc-800"
+            className="btn btn-ghost shrink-0"
             onClick={onClose}
             type="button"
           >
@@ -549,28 +545,29 @@ export function LeaderboardComparisonModal({
           </button>
         </header>
 
-        <div className="grid min-w-0 gap-5 p-4 sm:p-5">
+        <div className="grid min-w-0 gap-5 p-5 sm:p-6">
           {!currentUsername && (
-            <p className="rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm text-zinc-200">
+            <p className="rounded-xl border border-white/[0.07] bg-white/[0.02] px-4 py-3 text-sm text-zinc-300">
               Log in to compare your performance with other users.
             </p>
           )}
 
           {currentUsername && loading && (
-            <p className="rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm text-zinc-400">
+            <div className="flex items-center gap-3 rounded-xl border border-white/[0.07] bg-white/[0.02] px-4 py-3 text-sm text-zinc-400">
+              <span className="spinner" />
               Loading comparison data...
-            </p>
+            </div>
           )}
 
           {currentUsername && error && (
-            <p className="rounded-xl border border-red-900/60 bg-red-950/20 px-4 py-3 text-sm text-red-100">
+            <p className="rounded-xl border border-red-500/25 bg-red-500/10 px-4 py-3 text-sm text-red-200">
               {error}
             </p>
           )}
 
           {currentUsername && !loading && !error && (
             <>
-              <div className="flex rounded-xl border border-zinc-800 bg-zinc-900 p-1 text-sm">
+              <div className="inline-flex gap-1 rounded-xl border border-white/[0.07] bg-white/[0.02] p-1 text-sm">
                 {[
                   { key: "pairwise", label: "Pairwise" },
                   { key: "total", label: "Total Comparison" },
@@ -578,8 +575,8 @@ export function LeaderboardComparisonModal({
                   <button
                     className={`flex-1 rounded-lg px-3 py-2 font-semibold transition ${
                       comparisonMode === option.key
-                        ? "bg-zinc-100 text-zinc-950"
-                        : "text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
+                        ? "bg-white/[0.08] text-white ring-1 ring-white/10"
+                        : "text-zinc-400 hover:bg-white/[0.04] hover:text-zinc-100"
                     }`}
                     key={option.key}
                     onClick={() =>
@@ -593,7 +590,7 @@ export function LeaderboardComparisonModal({
               </div>
 
               <section className="grid gap-3 md:grid-cols-2">
-                <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
+                <div className="card p-5">
                   <h3 className="font-semibold text-white">Current User</h3>
                   <div className="mt-3 grid gap-3 sm:grid-cols-2">
                     <StatCard
@@ -606,7 +603,7 @@ export function LeaderboardComparisonModal({
                     />
                   </div>
                 </div>
-                <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
+                <div className="card p-5">
                   <h3 className="font-semibold text-white">
                     Selected Leaderboard User
                   </h3>
@@ -639,11 +636,12 @@ export function LeaderboardComparisonModal({
                   />
                 </>
               ) : totalComparisonLoading ? (
-                <p className="rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm text-zinc-400">
+                <div className="flex items-center gap-3 rounded-xl border border-white/[0.07] bg-white/[0.02] px-4 py-3 text-sm text-zinc-400">
+                  <span className="spinner" />
                   Loading total comparison...
-                </p>
+                </div>
               ) : totalComparisonError ? (
-                <p className="rounded-xl border border-red-900/60 bg-red-950/20 px-4 py-3 text-sm text-red-100">
+                <p className="rounded-xl border border-red-500/25 bg-red-500/10 px-4 py-3 text-sm text-red-200">
                   {totalComparisonError}
                 </p>
               ) : (
