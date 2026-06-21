@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { Timestamp } from "firebase/firestore";
 import { LeaderboardComparisonModal } from "@/components/LeaderboardComparisonModal";
+import { LeaderboardTopComparisonChart } from "@/components/LeaderboardTopComparisonChart";
 import { useAuth } from "@/hooks/useAuth";
 import { useLeaderboard } from "@/hooks/useLeaderboard";
 
@@ -18,21 +19,27 @@ function formatDate(timestamp?: Timestamp) {
   });
 }
 
-const medalTokens: Record<number, { ring: string; text: string; glow: string }> = {
+const medalTokens: Record<
+  number,
+  { ring: string; text: string; glow: string; label: string }
+> = {
   1: {
-    ring: "ring-amber-400/40",
-    text: "text-amber-300",
-    glow: "bg-amber-500/10",
+    ring: "ring-amber-300/45",
+    text: "text-amber-200",
+    glow: "bg-amber-400/10",
+    label: "Gold",
   },
   2: {
-    ring: "ring-zinc-300/30",
-    text: "text-zinc-200",
-    glow: "bg-zinc-300/10",
+    ring: "ring-slate-200/40",
+    text: "text-slate-100",
+    glow: "bg-slate-200/10",
+    label: "Silver",
   },
   3: {
-    ring: "ring-orange-400/30",
-    text: "text-orange-300",
-    glow: "bg-orange-500/10",
+    ring: "ring-[#c78b5a]/40",
+    text: "text-[#e5b083]",
+    glow: "bg-[#c78b5a]/10",
+    label: "Bronze",
   },
 };
 
@@ -103,6 +110,10 @@ export default function LeaderboardPage() {
             />
           </label>
         </header>
+
+        {!loading && !error && entries.length > 0 && (
+          <LeaderboardTopComparisonChart entries={entries} />
+        )}
 
         <section className="card leaderboard-shell max-w-full overflow-hidden">
           {loading && (
@@ -244,7 +255,7 @@ export default function LeaderboardPage() {
                                 <span
                                   className={`shrink-0 rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 text-xs font-semibold ${medal.text}`}
                                 >
-                                  Top {rank}
+                                  {medal.label}
                                 </span>
                               )}
                             </span>

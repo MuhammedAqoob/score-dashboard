@@ -10,10 +10,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { useComparisonSubmissions } from "@/hooks/useComparisonSubmissions";
-import { useLeaderboard } from "@/hooks/useLeaderboard";
 import { useUserSubmissions } from "@/hooks/useUserSubmissions";
-import { SCORE_CATEGORIES } from "@/services/analysisService";
 import {
   buildCategoryAverages,
   buildCategoryMaxScores,
@@ -30,19 +27,6 @@ type LeaderboardComparisonModalProps = {
   onClose: () => void;
 };
 
-const lineColors = [
-  "#34d399",
-  "#38bdf8",
-  "#a78bfa",
-  "#f59e0b",
-  "#ef4444",
-  "#14b8a6",
-  "#f472b6",
-  "#84cc16",
-  "#e879f9",
-  "#f97316",
-  "#d4d4d8",
-];
 const yAxisTicks = [0, 25, 50, 75, 100];
 
 const tooltipStyle = {
@@ -118,6 +102,85 @@ type LegendOption = {
   label: string;
   color: string;
 };
+
+type TooltipPayloadItem = {
+  color?: string;
+  name?: string;
+  value?: number | string;
+};
+
+function CategoryScoreTooltip({
+  active,
+  label,
+  payload,
+}: {
+  active?: boolean;
+  label?: string;
+  payload?: readonly TooltipPayloadItem[];
+}) {
+  if (!active || !payload?.length) {
+    return null;
+  }
+
+  const items = payload
+    .flatMap((item) => {
+      const value =
+        typeof item.value === "number" ? item.value : Number(item.value);
+
+      if (!Number.isFinite(value)) {
+        return [];
+      }
+
+      return [
+        {
+          color: item.color ?? "#d4d4d8",
+          name: item.name ?? "Player",
+          value,
+        },
+      ];
+    })
+    .sort((first, second) => second.value - first.value);
+  const leader = items[0];
+
+  if (!leader) {
+    return null;
+  }
+
+  return (
+    <div
+      className="min-w-48 rounded-xl border border-white/10 bg-zinc-950/95 p-3 text-xs text-zinc-200 shadow-2xl shadow-black/50"
+      style={tooltipStyle}
+    >
+      <p className="text-[0.68rem] font-semibold uppercase tracking-wide text-zinc-500">
+        Skill
+      </p>
+      <p className="mt-1 font-semibold text-white">{label}</p>
+      <div className="mt-3 rounded-lg border border-emerald-400/20 bg-emerald-400/10 px-3 py-2">
+        <p className="text-[0.68rem] font-semibold uppercase tracking-wide text-emerald-200/80">
+          Highest at this point
+        </p>
+        <p className="mt-1 flex items-center justify-between gap-3 text-sm font-semibold text-white">
+          <span className="min-w-0 truncate">{leader.name}</span>
+          <span className="text-emerald-300">{leader.value}/100</span>
+        </p>
+      </div>
+      <div className="mt-3 grid gap-1.5">
+        {items.map((item) => (
+          <div className="flex items-center justify-between gap-3" key={item.name}>
+            <span className="flex min-w-0 items-center gap-2">
+              <span
+                className="h-2 w-2 shrink-0 rounded-full"
+                style={{ backgroundColor: item.color }}
+              />
+              <span className="truncate text-zinc-300">{item.name}</span>
+            </span>
+            <span className="font-semibold text-zinc-100">{item.value}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function ClickableLegend({
   items,
@@ -259,7 +322,13 @@ function PeerComparisonChart({
                   width={36}
                 />
                 <Tooltip
-                  contentStyle={tooltipStyle}
+                  content={(props) => (
+                    <CategoryScoreTooltip
+                      active={props.active}
+                      label={String(props.label ?? "")}
+                      payload={props.payload as readonly TooltipPayloadItem[]}
+                    />
+                  )}
                   cursor={{ fill: "rgba(255, 255, 255, 0.04)" }}
                 />
                 <Line
@@ -306,156 +375,12 @@ function PeerComparisonChart({
   );
 }
 
-type TotalComparisonPlayer = {
-  key: string;
-  username: string;
-  submissions: Submission[];
-};
-
-function buildTotalComparisonData(players: TotalComparisonPlayer[]) {
-  return SCORE_CATEGORIES.map((category) => {
-    const row: Record<string, string | number> = {
-      name: category.label,
-    };
-
-    players.forEach((player) => {
-      const averages = buildCategoryAverages(player.submissions);
-      row[player.key] = averages[category.key] ?? 0;
-    });
-
-    return row;
-  });
-}
-
-function TotalComparisonChart({
-  players,
-}: {
-  players: TotalComparisonPlayer[];
-}) {
-  const data = useMemo(() => buildTotalComparisonData(players), [players]);
-  const [selectedLine, setSelectedLine] = useState<string | null>(null);
-  const selectionRef = useRef<HTMLElement>(null);
-  const legendItems = players.map((player, index) => ({
-    key: player.key,
-    label: player.username,
-    color: lineColors[index % lineColors.length],
-  }));
-
-  useEffect(() => {
-    if (!selectedLine) {
-      return;
-    }
-
-    const handlePointerDown = (event: PointerEvent) => {
-      if (!selectionRef.current?.contains(event.target as Node)) {
-        setSelectedLine(null);
-      }
-    };
-
-    window.addEventListener("pointerdown", handlePointerDown);
-
-    return () => window.removeEventListener("pointerdown", handlePointerDown);
-  }, [selectedLine]);
-
-  return (
-    <section
-      className="card min-w-0 overflow-hidden p-5"
-      ref={selectionRef}
-    >
-      <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h3 className="font-semibold text-white">Overall Comparison</h3>
-          <p className="mt-1 text-xs text-zinc-500">
-            Average category profile for the visible leaderboard players.
-          </p>
-        </div>
-        <p className="text-xs text-zinc-500">
-          {players.length} player{players.length === 1 ? "" : "s"}
-        </p>
-      </div>
-
-      {players.length === 0 ? (
-        <p className="mt-4 rounded-xl border border-white/[0.07] bg-white/[0.02] px-4 py-3 text-sm text-zinc-400">
-          No players available for total comparison.
-        </p>
-      ) : (
-        <>
-          <div className="mt-4 h-[420px] w-full max-w-full min-w-0 overflow-hidden">
-            <ResponsiveContainer
-              height="100%"
-              minHeight={1}
-              minWidth={1}
-              width="100%"
-            >
-              <LineChart
-                data={data}
-                margin={{ bottom: 92, left: 0, right: 12, top: 12 }}
-              >
-                <CartesianGrid
-                  stroke="rgba(255,255,255,0.06)"
-                  strokeDasharray="3 3"
-                  vertical={false}
-                />
-                <XAxis
-                  angle={-40}
-                  dataKey="name"
-                  height={92}
-                  interval={0}
-                  stroke="rgba(255,255,255,0.20)"
-                  tick={{
-                    fill: "#d4d4d8",
-                    fontSize: 10,
-                    textAnchor: "end",
-                  }}
-                  tickFormatter={formatAxisLabel}
-                  type="category"
-                />
-                <YAxis
-                  domain={[0, 100]}
-                  stroke="rgba(255,255,255,0.20)"
-                  tick={{ fill: "#a1a1aa", fontSize: 12 }}
-                  ticks={yAxisTicks}
-                  type="number"
-                  width={36}
-                />
-                <Tooltip contentStyle={tooltipStyle} />
-                {players.map((player, index) => (
-                  <Line
-                    animationDuration={700}
-                    dataKey={player.key}
-                    dot={false}
-                    key={player.key}
-                    name={player.username}
-                    stroke={lineColors[index % lineColors.length]}
-                    strokeOpacity={getLineOpacity(player.key, selectedLine)}
-                    strokeWidth={getLineWidth(player.key, selectedLine)}
-                    type="monotone"
-                  />
-                ))}
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-          <ClickableLegend
-            items={legendItems}
-            onSelect={setSelectedLine}
-            selectedKey={selectedLine}
-          />
-        </>
-      )}
-    </section>
-  );
-}
-
 export function LeaderboardComparisonModal({
   currentUsername,
   selectedUsername,
   onClose,
 }: LeaderboardComparisonModalProps) {
   const open = Boolean(selectedUsername);
-  const [comparisonMode, setComparisonMode] = useState<"pairwise" | "total">(
-    "pairwise",
-  );
-  const { entries: leaderboardEntries } = useLeaderboard(10);
   const {
     submissions: currentSubmissions,
     loading: currentLoading,
@@ -484,33 +409,6 @@ export function LeaderboardComparisonModal({
         buildCategoryAverages(selectedSubmissions),
       ),
     [currentSubmissions, selectedSubmissions],
-  );
-  const totalComparisonUsernames = useMemo(() => {
-    const topUsernames = leaderboardEntries.map((entry) => entry.username);
-
-    if (selectedUsername && !topUsernames.includes(selectedUsername)) {
-      return [...topUsernames, selectedUsername];
-    }
-
-    return topUsernames;
-  }, [leaderboardEntries, selectedUsername]);
-  const {
-    submissions: totalComparisonSubmissions,
-    loading: totalComparisonLoading,
-    error: totalComparisonError,
-  } = useComparisonSubmissions(
-    open && currentUsername ? totalComparisonUsernames : [],
-  );
-  const totalComparisonPlayers = useMemo<TotalComparisonPlayer[]>(
-    () =>
-      totalComparisonUsernames.map((username, index) => ({
-        key: `player_${index}`,
-        username,
-        submissions: totalComparisonSubmissions.filter(
-          (submission) => submission.username === username,
-        ),
-      })),
-    [totalComparisonSubmissions, totalComparisonUsernames],
   );
 
   if (!selectedUsername) {
@@ -567,28 +465,6 @@ export function LeaderboardComparisonModal({
 
           {currentUsername && !loading && !error && (
             <>
-              <div className="inline-flex gap-1 rounded-xl border border-white/[0.07] bg-white/[0.02] p-1 text-sm">
-                {[
-                  { key: "pairwise", label: "Pairwise" },
-                  { key: "total", label: "Total Comparison" },
-                ].map((option) => (
-                  <button
-                    className={`flex-1 rounded-lg px-3 py-2 font-semibold transition ${
-                      comparisonMode === option.key
-                        ? "bg-white/[0.08] text-white ring-1 ring-white/10"
-                        : "text-zinc-400 hover:bg-white/[0.04] hover:text-zinc-100"
-                    }`}
-                    key={option.key}
-                    onClick={() =>
-                      setComparisonMode(option.key as "pairwise" | "total")
-                    }
-                    type="button"
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
-
               <section className="grid gap-3 md:grid-cols-2">
                 <div className="card p-5">
                   <h3 className="font-semibold text-white">Current User</h3>
@@ -620,33 +496,18 @@ export function LeaderboardComparisonModal({
                 </div>
               </section>
 
-              {comparisonMode === "pairwise" ? (
-                <>
-                  <PeerComparisonChart
-                    currentUsername={currentUsername}
-                    data={topComparisonData}
-                    selectedUsername={selectedUsername}
-                    title="Top Score Comparison"
-                  />
-                  <PeerComparisonChart
-                    currentUsername={currentUsername}
-                    data={averageComparisonData}
-                    selectedUsername={selectedUsername}
-                    title="Average Score Comparison"
-                  />
-                </>
-              ) : totalComparisonLoading ? (
-                <div className="flex items-center gap-3 rounded-xl border border-white/[0.07] bg-white/[0.02] px-4 py-3 text-sm text-zinc-400">
-                  <span className="spinner" />
-                  Loading total comparison...
-                </div>
-              ) : totalComparisonError ? (
-                <p className="rounded-xl border border-red-500/25 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-                  {totalComparisonError}
-                </p>
-              ) : (
-                <TotalComparisonChart players={totalComparisonPlayers} />
-              )}
+              <PeerComparisonChart
+                currentUsername={currentUsername}
+                data={topComparisonData}
+                selectedUsername={selectedUsername}
+                title="Top Score Comparison"
+              />
+              <PeerComparisonChart
+                currentUsername={currentUsername}
+                data={averageComparisonData}
+                selectedUsername={selectedUsername}
+                title="Average Score Comparison"
+              />
             </>
           )}
         </div>

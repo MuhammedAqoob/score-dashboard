@@ -39,7 +39,7 @@ import {
 import { Submission } from "@/types/submission";
 import { UserProfileWithId, UserStatus } from "@/types/user";
 
-const ADMIN_PREVIEW_LIMIT = 15;
+const ADMIN_PREVIEW_LIMIT = 10;
 
 function formatDate(timestamp?: Timestamp) {
   if (!timestamp) {
@@ -343,6 +343,14 @@ function AdminDashboardContent() {
           validationEvents={validationEvents}
         />
 
+        <div className="rounded-2xl border border-emerald-400/20 bg-emerald-400/[0.07] px-5 py-4 text-sm text-emerald-100 shadow-[0_18px_46px_-34px_rgba(52,211,153,0.7)]">
+          <p className="font-semibold">Admins manage submissions here.</p>
+          <p className="mt-1 text-emerald-100/75">
+            Submission entry is for users; this control center is for review,
+            moderation, and platform oversight.
+          </p>
+        </div>
+
         <SectionShell
           description="Review access status, bans, and user-level score summaries."
           eyebrow="Moderation"
@@ -626,7 +634,13 @@ function AdminDashboardContent() {
           )}
           {!submissionsLoading && !submissionsError && filteredSubmissions.length === 0 && (
             <div className="mt-4 flex flex-col items-center gap-3 rounded-2xl border border-dashed border-white/10 bg-white/[0.015] px-6 py-12 text-center">
-              <p className="text-sm text-zinc-400">No submissions found.</p>
+              <p className="text-sm font-semibold text-zinc-200">
+                No submissions need review.
+              </p>
+              <p className="max-w-md text-sm text-zinc-500">
+                Submission entry is for users. Admins can review and moderate
+                incoming scorecards here when they arrive.
+              </p>
             </div>
           )}
           {!submissionsLoading && !submissionsError && filteredSubmissions.length > 0 && (

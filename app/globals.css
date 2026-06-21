@@ -429,18 +429,18 @@ body::before {
 }
 
 .leaderboard-table tbody tr.leaderboard-top-1 td {
-  background: linear-gradient(90deg, rgba(245, 158, 11, 0.14), rgba(255, 255, 255, 0.035));
-  border-color: rgba(245, 158, 11, 0.26);
+  background: linear-gradient(90deg, rgba(251, 191, 36, 0.16), rgba(255, 255, 255, 0.035));
+  border-color: rgba(251, 191, 36, 0.3);
 }
 
 .leaderboard-table tbody tr.leaderboard-top-2 td {
-  background: linear-gradient(90deg, rgba(212, 212, 216, 0.11), rgba(255, 255, 255, 0.032));
-  border-color: rgba(212, 212, 216, 0.18);
+  background: linear-gradient(90deg, rgba(226, 232, 240, 0.13), rgba(255, 255, 255, 0.032));
+  border-color: rgba(226, 232, 240, 0.22);
 }
 
 .leaderboard-table tbody tr.leaderboard-top-3 td {
-  background: linear-gradient(90deg, rgba(251, 146, 60, 0.12), rgba(255, 255, 255, 0.032));
-  border-color: rgba(251, 146, 60, 0.20);
+  background: linear-gradient(90deg, rgba(199, 139, 90, 0.14), rgba(255, 255, 255, 0.032));
+  border-color: rgba(199, 139, 90, 0.24);
 }
 
 /* --- Admin dashboard hierarchy ----------------------------- */
