@@ -57,28 +57,51 @@ export async function checkAndClearExpiredBan(username: string) {
   });
 }
 
-export async function createUserProfile(
+/** --------------------------------------------------------------
+ *  NEW – Register a user using Firebase Email/Password.
+ *  The UI still sends a *username* + *password*; we turn the username
+ *  into a deterministic synthetic email (`${username}@scoreboard.internal`).
+ * --------------------------------------------------------------- */
+function syntheticEmail(username: string): string {
+  return `${username}@scoreboard.internal`;
+}
+
+export async function registerWithEmail(
   username: string,
   password: string,
-  currentUid: string,
+  // `currentUid` is kept for backward‑compatibility but no longer stored.
+  currentUid?: string,
 ) {
   const cleanUsername = normalizeUsername(username);
-  const profileRef = getUserProfileRef(cleanUsername);
-  const existingProfile = await getDoc(profileRef);
+  const email = syntheticEmail(cleanUsername);
 
-  if (existingProfile.exists()) {
+  // 1️⃣ Create the Firebase Auth account (throws if email already exists)
+  const cred: UserCredential = await createUserWithEmailAndPassword(
+    auth,
+    email,
+    password,
+  );
+  const uid = cred.user.uid;
+
+  // 2️⃣ Write the Firestore profile (no password field)
+  const profileRef = getUserProfileRef(cleanUsername);
+  const existing = await getDoc(profileRef);
+  if (existing.exists()) {
+    // Should never happen because usernames are unique, but guard anyway.
     throw new Error("That username is already taken.");
   }
 
   const profile: UserProfile = {
     username: cleanUsername,
-    password,
+    // password omitted – source of truth is now Firebase Auth
     score: 0,
     approved: true,
     status: "approved",
     bannedUntil: null,
     banReason: null,
-    currentUid,
+    email,
+    authUid: uid,
+    // currentUid is now obsolete; we keep it only for a short grace period.
   };
 
   await setDoc(profileRef, {
