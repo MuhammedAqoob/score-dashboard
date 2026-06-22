@@ -1,13 +1,42 @@
 import {
+  UserCredential,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+} from "firebase/auth";
+import {
   doc,
   getDoc,
   serverTimestamp,
   setDoc,
   updateDoc,
 } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 import { getEffectiveUserStatus, isBanExpired } from "@/services/moderationUtils";
-import { UserProfile } from "@/types/user";
+import { UserProfile, UserProfileWithId } from "@/types/user";
+
+/**
+ * Auth migration (Firestore plaintext passwords -> Firebase Authentication).
+ *
+ * Identity model:
+ *   - Firestore profile doc id : `users/{username}`          (unchanged)
+ *   - Firebase Auth identity   : synthetic email + password
+ *                                email = `${username}@scoreboard.internal`
+ *   - Firestore profile doc    : stores `authUid` + `email`, NEVER `password`
+ *
+ * The public function names/signatures are preserved so that the existing
+ * AuthContext does not need to change its call sites.
+ *
+ * Passwords are no longer stored in Firestore. The only plaintext read path is
+ * the optional, opt-in legacy fallback in `migrateLegacyUserIfEligible`,
+ * guarded by NEXT_PUBLIC_LEGACY_LOGIN_FALLBACK and intended to be removed once
+ * the bulk migration script has processed every user.
+ */
+
+const SYNTHETIC_EMAIL_DOMAIN = "scoreboard.internal";
+
+/** Opt-in only legacy fallback. Default OFF. */
+const LEGACY_FALLBACK_ENABLED =
+  process.env.NEXT_PUBLIC_LEGACY_LOGIN_FALLBACK === "true";
 
 function normalizeUsername(username: string) {
   return username.trim().toLowerCase();
@@ -17,11 +46,17 @@ function getUserProfileRef(username: string) {
   return doc(db, "users", normalizeUsername(username));
 }
 
+export function syntheticEmail(username: string): string {
+  return `${normalizeUsername(username)}@${SYNTHETIC_EMAIL_DOMAIN}`;
+}
+
 export function createDefaultUsername(uid: string) {
   return `player-${uid.slice(0, 6)}`;
 }
 
-export async function getUserProfileByUsername(username: string) {
+export async function getUserProfileByUsername(
+  username: string,
+): Promise<UserProfileWithId | null> {
   const cleanUsername = normalizeUsername(username);
   const profileSnap = await getDoc(getUserProfileRef(cleanUsername));
 
@@ -57,51 +92,73 @@ export async function checkAndClearExpiredBan(username: string) {
   });
 }
 
-/** --------------------------------------------------------------
- *  NEW – Register a user using Firebase Email/Password.
- *  The UI still sends a *username* + *password*; we turn the username
- *  into a deterministic synthetic email (`${username}@scoreboard.internal`).
- * --------------------------------------------------------------- */
-function syntheticEmail(username: string): string {
-  return `${username}@scoreboard.internal`;
+/**
+ * Apply the existing ban/auto-approve status logic to a profile and persist it.
+ * Behaviour preserved verbatim from the pre-migration implementation.
+ */
+async function applyLoginStatusEffects(
+  username: string,
+  profile: UserProfileWithId,
+): Promise<UserProfileWithId> {
+  const userStatus = getEffectiveUserStatus(profile);
+  const shouldAutoApprove = userStatus !== "banned";
+
+  if (shouldAutoApprove) {
+    await updateDoc(getUserProfileRef(username), {
+      approved: true,
+      status: "approved",
+    });
+
+    return {
+      ...profile,
+      approved: true,
+      status: "approved",
+    };
+  }
+
+  return profile;
 }
 
-export async function registerWithEmail(
+/**
+ * Sign up a brand-new user.
+ * Creates the Firebase Auth account (source of truth for the password) and the
+ * Firestore profile doc (no `password` field).
+ *
+ * Signature preserved: (username, password, currentUid?) — `currentUid` is
+ * accepted for backward-compatibility but ignored (identity is now keyed by
+ * the Firebase Auth account's own uid, stored as `authUid`).
+ */
+export async function createUserProfile(
   username: string,
   password: string,
-  // `currentUid` is kept for backward‑compatibility but no longer stored.
-  currentUid?: string,
-) {
+  // Kept for call-site compatibility with AuthContext; intentionally unused.
+  _currentUid?: string,
+): Promise<UserProfileWithId> {
   const cleanUsername = normalizeUsername(username);
   const email = syntheticEmail(cleanUsername);
 
-  // 1️⃣ Create the Firebase Auth account (throws if email already exists)
-  const cred: UserCredential = await createUserWithEmailAndPassword(
+  const profileRef = getUserProfileRef(cleanUsername);
+  const existing = await getDoc(profileRef);
+  if (existing.exists()) {
+    throw new Error("That username is already taken.");
+  }
+
+  // Firebase Auth is the source of truth for the password.
+  const credential: UserCredential = await createUserWithEmailAndPassword(
     auth,
     email,
     password,
   );
-  const uid = cred.user.uid;
-
-  // 2️⃣ Write the Firestore profile (no password field)
-  const profileRef = getUserProfileRef(cleanUsername);
-  const existing = await getDoc(profileRef);
-  if (existing.exists()) {
-    // Should never happen because usernames are unique, but guard anyway.
-    throw new Error("That username is already taken.");
-  }
 
   const profile: UserProfile = {
     username: cleanUsername,
-    // password omitted – source of truth is now Firebase Auth
     score: 0,
     approved: true,
     status: "approved",
     bannedUntil: null,
     banReason: null,
     email,
-    authUid: uid,
-    // currentUid is now obsolete; we keep it only for a short grace period.
+    authUid: credential.user.uid,
   };
 
   await setDoc(profileRef, {
@@ -115,38 +172,107 @@ export async function registerWithEmail(
   };
 }
 
-export async function loginUserProfile(
-  username: string,
+/**
+ * TEMPORARY — legacy first-login migration.
+ *
+ * Only runs when NEXT_PUBLIC_LEGACY_LOGIN_FALLBACK === "true" (default OFF).
+ * If the username has a Firestore doc that still carries a legacy `password`
+ * field, and that field matches the supplied password, this provisions the
+ * Firebase Auth account, records `authUid`/`email`, and REMOVES the `password`
+ * field from Firestore. Subsequent logins then take the normal Firebase Auth
+ * path and never touch plaintext again.
+ *
+ * Isolation:
+ *   - Single entry point (`loginUserProfile`), guarded by the flag.
+ *   - No other code references legacy plaintext.
+ *   - Remove this function + the flag once all users are migrated.
+ */
+async function migrateLegacyUserIfEligible(
+  cleanUsername: string,
   password: string,
-  currentUid: string,
-) {
-  const cleanUsername = normalizeUsername(username);
+): Promise<UserProfileWithId> {
   const profile = await getUserProfileByUsername(cleanUsername);
 
-  if (!profile || profile.password !== password) {
+  if (!profile || !profile.password) {
     throw new Error("Username or password is incorrect.");
   }
 
-  const userStatus = getEffectiveUserStatus(profile);
-  const shouldAutoApprove = userStatus !== "banned";
+  if (profile.password !== password) {
+    throw new Error("Username or password is incorrect.");
+  }
 
-  await updateDoc(getUserProfileRef(cleanUsername), {
-    currentUid,
-    ...(shouldAutoApprove
-      ? { approved: true, status: "approved" }
-      : {}),
+  // Provision the Firebase Auth account with the same password.
+  const credential = await createUserWithEmailAndPassword(
+    auth,
+    syntheticEmail(cleanUsername),
+    password,
+  );
+
+  const profileRef = getUserProfileRef(cleanUsername);
+  await updateDoc(profileRef, {
+    email: syntheticEmail(cleanUsername),
+    authUid: credential.user.uid,
+    // Remove the legacy plaintext password field for good.
+    password: null,
   });
 
+  const { password: _removed, ...profileWithoutPassword } = profile;
   return {
-    ...profile,
-    ...(shouldAutoApprove
-      ? {
-          approved: true,
-          status: "approved" as const,
-        }
-      : {}),
-    currentUid,
+    ...profileWithoutPassword,
+    email: syntheticEmail(cleanUsername),
+    authUid: credential.user.uid,
   };
+}
+
+/**
+ * Log a user in using Firebase Authentication (synthetic email + password).
+ *
+ * Signature preserved: (username, password, currentUid?).
+ *
+ * Flow:
+ *   1. Sign in with Firebase Auth.
+ *   2. Load the profile by username, apply ban/auto-approve effects.
+ *   3. On `auth/user-not-found`, optionally fall back to the legacy
+ *      one-time migration (flag-gated, default OFF).
+ */
+export async function loginUserProfile(
+  username: string,
+  password: string,
+  // Kept for call-site compatibility with AuthContext; intentionally unused.
+  _currentUid?: string,
+): Promise<UserProfileWithId> {
+  const cleanUsername = normalizeUsername(username);
+
+  try {
+    await signInWithEmailAndPassword(
+      auth,
+      syntheticEmail(cleanUsername),
+      password,
+    );
+  } catch (error) {
+    const isUserMissing = isAuthUserNotFoundError(error);
+
+    if (isUserMissing && LEGACY_FALLBACK_ENABLED) {
+      // One-time legacy migration path. Default OFF.
+      return migrateLegacyUserIfEligible(cleanUsername, password);
+    }
+
+    if (isUserMissing) {
+      throw new Error("Username or password is incorrect.");
+    }
+
+    throw new Error(
+      error instanceof Error ? error.message : "Could not sign in.",
+    );
+  }
+
+  const profile = await getUserProfileByUsername(cleanUsername);
+
+  if (!profile) {
+    throw new Error("Username or password is incorrect.");
+  }
+
+  return applyLoginStatusEffects(cleanUsername, profile);
 }
 
 export async function updateUserProfile(
@@ -164,4 +290,21 @@ export async function updateUserProfile(
   }
 
   await updateDoc(getUserProfileRef(cleanUsername), data);
+}
+
+/**
+ * Detects the Firebase Auth "no such user" error across error shapes.
+ */
+function isAuthUserNotFoundError(error: unknown): boolean {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  const code = (error as { code?: string }).code;
+  return (
+    code === "auth/user-not-found" ||
+    code === "auth/email-not-found" ||
+    code === "auth/invalid-credential" ||
+    code === "auth/invalid-login-credentials"
+  );
 }

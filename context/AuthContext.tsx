@@ -14,18 +14,18 @@ import {
   resetAnonymousSession,
   subscribeToAuthState,
 } from "@/services/anonymousAuth";
+import { logoutAdmin } from "@/services/adminSession";
+import {
+  clearSessionUsername,
+  getSessionUsername,
+  setSessionUsername,
+} from "@/services/sessionCookie";
 import {
   createUserProfile,
   getUserProfileByUsername,
   loginUserProfile,
   updateUserProfile,
 } from "@/services/userService";
-import {
-  clearSessionUsername,
-  getSessionUsername,
-  setSessionUsername,
-} from "@/services/sessionCookie";
-import { logoutAdmin } from "@/services/adminSession";
 import { UserProfile, UserProfileWithId } from "@/types/user";
 
 type AuthContextValue = {
@@ -43,6 +43,17 @@ export const AuthContext = createContext<AuthContextValue | undefined>(
   undefined,
 );
 
+/**
+ * Auth migration: identity now flows from the signed-in Firebase user.
+ *
+ *  - A signed-in user with a synthetic email (`*@scoreboard.internal`) is a
+ *    regular app user; we load their profile by the username encoded in the
+ *    email.
+ *  - The session cookie (`scoreboard_username`) is kept only as a profile-load
+ *    hint for the brief window before the auth listener resolves; it is NOT a
+ *    trust boundary.
+ *  - Anonymous visitors still get an anonymous session (browsing/leaderboard).
+ */
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfileWithId | null>(null);
@@ -57,38 +68,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setLoading(true);
         setError("");
 
-        const anonymousUser = user ?? (await createAnonymousSession());
-        const storedUsername = getSessionUsername();
+        const resolvedUser = user ?? (await createAnonymousSession());
 
         if (!active) {
           return;
         }
 
-        setFirebaseUser(anonymousUser);
+        setFirebaseUser(resolvedUser);
 
-        if (!storedUsername) {
+        // Only synthetic-email accounts map to an app profile. Anonymous
+        // visitors (no email) have no profile — they can browse only.
+        if (!resolvedUser.email) {
           setProfile(null);
           return;
         }
 
-        const storedProfile = await getUserProfileByUsername(storedUsername);
+        const usernameFromEmail = deriveUsernameFromEmail(resolvedUser.email);
+        const storedUsername = getSessionUsername();
+        const username = usernameFromEmail ?? storedUsername;
+
+        if (!username) {
+          setProfile(null);
+          return;
+        }
+
+        const loadedProfile = await getUserProfileByUsername(username);
 
         if (!active) {
           return;
         }
 
-        setProfile(storedProfile);
+        setProfile(loadedProfile);
       } catch (syncError) {
         if (!active) {
           return;
         }
 
-        setFirebaseUser(null);
         setProfile(null);
         setError(
           syncError instanceof Error
             ? syncError.message
-            : "Could not initialize anonymous session.",
+            : "Could not initialize session.",
         );
       } finally {
         if (active) {
@@ -109,36 +129,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signup = useCallback(
     async (username: string, password: string) => {
-      const anonymousUser = firebaseUser ?? (await createAnonymousSession());
-      const createdProfile = await createUserProfile(
-        username,
-        password,
-        anonymousUser.uid,
-      );
+      // createUserProfile provisions the Firebase Auth account + Firestore doc.
+      // The auth-state listener will fire and reload the profile; we also set
+      // local state eagerly for snappy UX.
+      const createdProfile = await createUserProfile(username, password);
       logoutAdmin();
 
-      setFirebaseUser(anonymousUser);
-      setProfile(createdProfile);
       setSessionUsername(createdProfile.username);
+      setProfile(createdProfile);
     },
-    [firebaseUser],
+    [],
   );
 
   const login = useCallback(
     async (username: string, password: string) => {
-      const anonymousUser = firebaseUser ?? (await createAnonymousSession());
-      const loggedInProfile = await loginUserProfile(
-        username,
-        password,
-        anonymousUser.uid,
-      );
-
-      setFirebaseUser(anonymousUser);
-      setProfile(loggedInProfile);
-      setSessionUsername(loggedInProfile.username);
+      const loggedInProfile = await loginUserProfile(username, password);
       logoutAdmin();
+
+      setSessionUsername(loggedInProfile.username);
+      setProfile(loggedInProfile);
     },
-    [firebaseUser],
+    [],
   );
 
   const logout = useCallback(async () => {
@@ -177,4 +188,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
+/** Extracts the username from a synthetic email (`alice@scoreboard.internal`). */
+function deriveUsernameFromEmail(email: string): string | null {
+  const match = email.match(/^(.+)@scoreboard\.internal$/);
+  return match ? match[1] : null;
 }

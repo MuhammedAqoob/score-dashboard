@@ -3,15 +3,14 @@
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
-import { useAuth } from "@/hooks/useAuth";
 
 export default function AdminLoginPage() {
   const { isAdmin, loading, login } = useAdminAuth();
-  const { logout: logoutUser } = useAuth();
   const router = useRouter();
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (!loading && isAdmin) {
@@ -24,13 +23,19 @@ export default function AdminLoginPage() {
     setMessage("");
 
     try {
-      await logoutUser();
-      login(username.trim(), password);
+      setSubmitting(true);
+      // Do NOT sign out first: signInWithEmailAndPassword atomically replaces
+      // the current session. A prior signOut() created a race between the
+      // null-state and signed-in-state auth callbacks, causing the admin to be
+      // briefly shown the dashboard and then redirected back to login.
+      await login(email, password);
       router.replace("/admin");
     } catch (error) {
       setMessage(
         error instanceof Error ? error.message : "Could not log in as admin.",
       );
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -65,12 +70,14 @@ export default function AdminLoginPage() {
           onSubmit={handleSubmit}
         >
           <label className="flex flex-col gap-1.5 text-sm font-medium text-zinc-200">
-            Username
+            Email
             <input
+              autoComplete="email"
               className="input"
-              onChange={(event) => setUsername(event.target.value)}
-              placeholder="admin"
-              value={username}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="admin@example.com"
+              type="email"
+              value={email}
             />
           </label>
 
@@ -85,8 +92,15 @@ export default function AdminLoginPage() {
             />
           </label>
 
-          <button className="btn btn-primary mt-1 w-full" type="submit">
-            Login
+          <button
+            className="btn btn-primary mt-1 w-full"
+            disabled={submitting}
+            type="submit"
+          >
+            {submitting && (
+              <span className="spinner !h-4 !w-4 !border-emerald-950/40 !border-t-emerald-950" />
+            )}
+            {submitting ? "Signing in..." : "Login"}
           </button>
 
           {message && (

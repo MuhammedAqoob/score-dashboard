@@ -1,0 +1,106 @@
+rules_version = '2';
+
+// =============================================================================
+// Score Board — Firestore security rules (Firebase Auth migration)
+//
+// Auth model:
+//   - Regular users authenticate via Firebase Email/Password using a synthetic
+//     email:  `${username}@scoreboard.internal`
+//   - Admin is a real Firebase Auth account whose email equals ADMIN_EMAIL below.
+//
+// Public reads are required because the public leaderboard / dashboards read
+// `users` and `submissions` collections while unauthenticated.
+// =============================================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---- Configuration -------------------------------------------------------
+    // The allowlisted administrator email. REPLACE with your real admin email
+    // and keep it in sync with NEXT_PUBLIC_ADMIN_EMAIL in .env.local.
+    function adminEmail() {
+      return 'REPLACE_WITH_ADMIN_EMAIL';
+    }
+
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.email is string
+        && request.auth.token.email == adminEmail();
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // ---- helpers -------------------------------------------------------------
+    function isScoreboardEmail(email) {
+      return email is string
+        && email.matches('^[^@]+@scoreboard\\.internal$');
+    }
+
+    function usernameFromEmail(email) {
+      return email.split('@')[0];
+    }
+
+    // ---- users ---------------------------------------------------------------
+    // Doc id = username. Public read keeps the leaderboard working.
+    match /users/{username} {
+      allow read: if true;
+
+      // Self-signup: a signed-in user may create only their own profile, and
+      // must never write a plaintext `password` field.
+      allow create: if isSignedIn()
+        && isScoreboardEmail(request.auth.token.email)
+        && usernameFromEmail(request.auth.token.email) == username
+        && request.resource.data.username == username
+        && !request.resource.data.keys().hasAny(['password']);
+
+      // All other user mutations (approve/revoke/ban/status/score) are admin
+      // moderation actions — admin only.
+      allow update, delete: if isAdmin();
+    }
+
+    // ---- submissions ---------------------------------------------------------
+    // Doc id = `${username}_${dayKey}`. Public read for leaderboard/analytics.
+    match /submissions/{submissionId} {
+      allow read: if true;
+
+      // A signed-in user may create a submission for their own username only.
+      allow create: if isSignedIn()
+        && isScoreboardEmail(request.auth.token.email)
+        && usernameFromEmail(request.auth.token.email)
+            == request.resource.data.username;
+
+      // Score edits / soft delete / restore are admin actions.
+      allow update, delete: if isAdmin();
+    }
+
+    // ---- prompts -------------------------------------------------------------
+    // Single doc: prompts/activePrompt. Public read, admin-managed.
+    match /prompts/{promptId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ---- adminLogs -----------------------------------------------------------
+    // Created by moderation actions. Public read (shown in admin dashboard),
+    // admin-only write. Change `read` to isAdmin() if logs should be private.
+    match /adminLogs/{logId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ---- validationEvents ----------------------------------------------------
+    // Created on submission success/failure by signed-in users.
+    match /validationEvents/{eventId} {
+      allow read: if isAdmin();
+      allow create: if isSignedIn();
+      allow update, delete: if isAdmin();
+    }
+
+    // Default-deny everything else.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
