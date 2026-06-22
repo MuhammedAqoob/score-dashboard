@@ -19,11 +19,15 @@ export function getSessionUsername() {
 }
 
 export function setSessionUsername(username: string) {
+  const secureFlag = process.env.NODE_ENV === "production" ? "; Secure" : "";
+
   document.cookie = `${SESSION_COOKIE_NAME}=${encodeURIComponent(
     username,
-  )}; path=/; max-age=${MAX_AGE_SECONDS}; sameSite=lax`;
+  )}; path=/; max-age=${MAX_AGE_SECONDS}; SameSite=Strict${secureFlag}`;
 }
 
 export function clearSessionUsername() {
-  document.cookie = `${SESSION_COOKIE_NAME}=; path=/; max-age=0; sameSite=lax`;
+  const secureFlag = process.env.NODE_ENV === "production" ? "; Secure" : "";
+
+  document.cookie = `${SESSION_COOKIE_NAME}=; path=/; max-age=0; SameSite=Strict${secureFlag}`;
 }

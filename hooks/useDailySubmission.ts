@@ -25,8 +25,6 @@ export function useDailySubmission(username?: string) {
     let active = true;
 
     const loadInitialSubmission = async () => {
-      await Promise.resolve();
-
       if (!username) {
         if (active) {
           setHasSubmittedToday(false);

@@ -10,6 +10,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { MetricCard } from "@/components/MetricCard";
 import { useUserSubmissions } from "@/hooks/useUserSubmissions";
 import {
   buildCategoryAverages,
@@ -20,6 +21,7 @@ import {
 } from "@/services/analyticsService";
 import { getEffectiveSubmissionScore } from "@/services/moderationUtils";
 import { Submission } from "@/types/submission";
+import { formatAxisLabel, tooltipStyle } from "@/utils/chartConstants";
 
 type LeaderboardComparisonModalProps = {
   currentUsername?: string;
@@ -28,36 +30,6 @@ type LeaderboardComparisonModalProps = {
 };
 
 const yAxisTicks = [0, 25, 50, 75, 100];
-
-const tooltipStyle = {
-  background: "rgba(9, 9, 11, 0.95)",
-  border: "1px solid rgba(255,255,255,0.10)",
-  borderRadius: 10,
-  color: "#f4f4f5",
-  fontSize: 12,
-  padding: "8px 12px",
-  boxShadow: "0 20px 40px -20px rgba(0,0,0,0.8)",
-} as const;
-
-function formatAxisLabel(label: string) {
-  const labelMap: Record<string, string> = {
-    "Problem-solving": "Problem",
-    Brainstorming: "Ideas",
-    "Research skill": "Research",
-    "Learning speed": "Learning",
-    "Analytical thinking": "Analytical",
-    "Technical/logical thinking": "Tech/logical",
-    "Communication clarity": "Comm.",
-    "Decision making": "Decision",
-    "Self-correction": "Self-correct",
-    "Planning/execution": "Planning",
-    "Curiosity/initiative": "Curiosity",
-    "Persistence/consistency": "Persistence",
-    "Prompt quality": "Prompt",
-  };
-
-  return labelMap[label] ?? label;
-}
 
 function getTopScore(submissions: Submission[]) {
   return getActiveValidatedSubmissions(submissions).reduce(
@@ -80,21 +52,6 @@ function getAverageScore(submissions: Submission[]) {
   );
 
   return Math.round(total / activeSubmissions.length);
-}
-
-function StatCard({
-  label,
-  value,
-}: {
-  label: string;
-  value: string | number;
-}) {
-  return (
-    <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-4">
-      <p className="text-xs text-zinc-500">{label}</p>
-      <p className="mt-2 text-2xl font-bold text-white">{value}</p>
-    </div>
-  );
 }
 
 type LegendOption = {
@@ -469,11 +426,11 @@ export function LeaderboardComparisonModal({
                 <div className="card p-5">
                   <h3 className="font-semibold text-white">Current User</h3>
                   <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                    <StatCard
+                    <MetricCard
                       label="Your Top Score"
                       value={`${getTopScore(currentSubmissions)}/100`}
                     />
-                    <StatCard
+                    <MetricCard
                       label="Your Average Score"
                       value={`${getAverageScore(currentSubmissions)}/100`}
                     />
@@ -484,11 +441,11 @@ export function LeaderboardComparisonModal({
                     Selected Leaderboard User
                   </h3>
                   <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                    <StatCard
+                    <MetricCard
                       label="Their Top Score"
                       value={`${getTopScore(selectedSubmissions)}/100`}
                     />
-                    <StatCard
+                    <MetricCard
                       label="Their Average Score"
                       value={`${getAverageScore(selectedSubmissions)}/100`}
                     />

@@ -4,6 +4,7 @@ import {
   getDocs,
   onSnapshot,
   query,
+  where,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import {
@@ -96,14 +97,19 @@ function buildLeaderboard(
     .slice(0, limitCount);
 }
 
+function buildApprovedUsernames(users: Array<Record<string, unknown>>) {
+  return new Set(
+    users
+      .filter((user) => isApprovedUser(user))
+      .map((user) => String(user.username ?? "")),
+  );
+}
+
 async function fetchApprovedUsernames() {
   const usersSnapshot = await getDocs(collection(db, "users"));
 
-  return new Set(
-    usersSnapshot.docs
-      .map((userDocument) => userDocument.data())
-      .filter((user) => isApprovedUser(user))
-      .map((user) => String(user.username ?? "")),
+  return buildApprovedUsernames(
+    usersSnapshot.docs.map((userDocument) => userDocument.data()),
   );
 }
 
@@ -124,14 +130,12 @@ export async function fetchLeaderboard(limitCount = 10) {
 
 export async function fetchUserAverageScore(username: string) {
   const submissionsSnapshot = await getDocs(
-    query(collection(db, SUBMISSIONS_COLLECTION)),
+    // Requires a Firestore index on submissions.username for this filtered read.
+    query(collection(db, SUBMISSIONS_COLLECTION), where("username", "==", username)),
   );
   const userSubmissions = submissionsSnapshot.docs
     .map((submissionDocument) => submissionDocument.data())
-    .filter(
-      (submission) =>
-        submission.username === username && isActiveValidatedSubmission(submission),
-    );
+    .filter(isActiveValidatedSubmission);
 
   if (userSubmissions.length === 0) {
     return {
@@ -156,23 +160,43 @@ export function subscribeToLeaderboard(
   onUpdate: (entries: LeaderboardEntry[]) => void,
   onError: (error: Error) => void,
 ) {
-  return onSnapshot(
-    query(collection(db, SUBMISSIONS_COLLECTION)),
+  let approvedUsernames = new Set<string>();
+  let submissions: Array<Record<string, unknown>> = [];
+  let hasUsers = false;
+  let hasSubmissions = false;
+
+  const emit = () => {
+    if (hasUsers && hasSubmissions) {
+      onUpdate(buildLeaderboard(submissions, limitCount, approvedUsernames));
+    }
+  };
+
+  const unsubscribeUsers = onSnapshot(
+    query(collection(db, "users")),
     (snapshot) => {
-      fetchApprovedUsernames()
-        .then((approvedUsernames) => {
-          onUpdate(
-            buildLeaderboard(
-              snapshot.docs.map((submissionDocument) =>
-                submissionDocument.data(),
-              ),
-              limitCount,
-              approvedUsernames,
-            ),
-          );
-        })
-        .catch(onError);
+      approvedUsernames = buildApprovedUsernames(
+        snapshot.docs.map((userDocument) => userDocument.data()),
+      );
+      hasUsers = true;
+      emit();
     },
     onError,
   );
+
+  const unsubscribeSubmissions = onSnapshot(
+    query(collection(db, SUBMISSIONS_COLLECTION)),
+    (snapshot) => {
+      submissions = snapshot.docs.map((submissionDocument) =>
+        submissionDocument.data(),
+      );
+      hasSubmissions = true;
+      emit();
+    },
+    onError,
+  );
+
+  return () => {
+    unsubscribeUsers();
+    unsubscribeSubmissions();
+  };
 }

@@ -3,6 +3,7 @@
 import { CategoryBarChart } from "@/components/analytics/CategoryBarChart";
 import { CategoryComparisonChart } from "@/components/analytics/CategoryComparisonChart";
 import { CategoryScoreCards } from "@/components/analytics/CategoryScoreCards";
+import { ChartPanel } from "@/components/analytics/ChartPanel";
 import { ScoreTrendChart } from "@/components/analytics/ScoreTrendChart";
 import {
   buildCategoryChartData,
@@ -68,21 +69,6 @@ function StatTile({
       >
         {value}
       </p>
-    </div>
-  );
-}
-
-function ChartPanel({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="card min-w-0 overflow-hidden p-4 sm:p-5">
-      <h3 className="text-lg font-semibold text-white">{title}</h3>
-      <div className="mt-4">{children}</div>
     </div>
   );
 }

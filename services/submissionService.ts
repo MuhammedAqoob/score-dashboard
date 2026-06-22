@@ -1,8 +1,6 @@
 import {
-  collection,
   doc,
   getDoc,
-  getDocs,
   serverTimestamp,
   setDoc,
 } from "firebase/firestore";
@@ -22,10 +20,6 @@ import { createValidationEvent } from "@/services/validationEventService";
 import { CreateSubmissionInput } from "@/types/submission";
 
 const SUBMISSIONS_COLLECTION = "submissions";
-
-function getSubmissionsCollectionRef() {
-  return collection(db, SUBMISSIONS_COLLECTION);
-}
 
 function getSubmissionId(username: string, dayKey: string) {
   return `${encodeURIComponent(username)}_${dayKey}`;
@@ -145,9 +139,4 @@ export async function createSubmission(input: CreateSubmissionInput) {
     submittedAt: new Date(),
     dayKey,
   };
-}
-
-export async function getSubmissionCount() {
-  const submissionsSnapshot = await getDocs(getSubmissionsCollectionRef());
-  return submissionsSnapshot.size;
 }

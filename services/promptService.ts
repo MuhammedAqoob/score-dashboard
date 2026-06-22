@@ -160,5 +160,3 @@ export async function saveActivePrompt(input: CreatePromptInput) {
     details: `Active prompt saved as version ${input.version}.`,
   });
 }
-
-export const createPrompt = saveActivePrompt;

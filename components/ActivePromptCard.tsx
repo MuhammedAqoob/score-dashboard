@@ -1,24 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Timestamp } from "firebase/firestore";
 import { PromptWithId } from "@/types/prompt";
+import { formatDate } from "@/utils/formatDate";
 
 type ActivePromptCardProps = {
   prompt: PromptWithId;
 };
-
-function formatDate(timestamp?: Timestamp) {
-  if (!timestamp) {
-    return "Just now";
-  }
-
-  return timestamp.toDate().toLocaleDateString("en-US", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
 
 export function ActivePromptCard({ prompt }: ActivePromptCardProps) {
   const [copyMessage, setCopyMessage] = useState("");
@@ -76,7 +64,7 @@ export function ActivePromptCard({ prompt }: ActivePromptCardProps) {
         <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] px-4 py-3">
           <dt className="text-xs text-zinc-500">Created</dt>
           <dd className="mt-1 font-semibold text-white">
-            {formatDate(prompt.createdAt)}
+            {formatDate(prompt.createdAt, { fallback: "Just now" })}
           </dd>
         </div>
       </dl>

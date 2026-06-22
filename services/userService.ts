@@ -29,30 +29,32 @@ export async function getUserProfileByUsername(username: string) {
     return null;
   }
 
-  const profileData = profileSnap.data() as UserProfile;
-
-  if (profileData.status === "banned" && isBanExpired(profileData.bannedUntil)) {
-    await updateDoc(getUserProfileRef(cleanUsername), {
-      approved: true,
-      status: "approved",
-      bannedUntil: null,
-      banReason: null,
-    });
-
-    return {
-      id: cleanUsername,
-      ...profileData,
-      approved: true,
-      status: "approved" as const,
-      bannedUntil: null,
-      banReason: null,
-    };
-  }
-
   return {
     id: cleanUsername,
-    ...profileData,
+    ...(profileSnap.data() as UserProfile),
   };
+}
+
+export async function checkAndClearExpiredBan(username: string) {
+  const cleanUsername = normalizeUsername(username);
+  const profileSnap = await getDoc(getUserProfileRef(cleanUsername));
+
+  if (!profileSnap.exists()) {
+    return;
+  }
+
+  const profileData = profileSnap.data() as UserProfile;
+
+  if (profileData.status !== "banned" || !isBanExpired(profileData.bannedUntil)) {
+    return;
+  }
+
+  await updateDoc(getUserProfileRef(cleanUsername), {
+    approved: true,
+    status: "approved",
+    bannedUntil: null,
+    banReason: null,
+  });
 }
 
 export async function createUserProfile(

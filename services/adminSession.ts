@@ -1,7 +1,7 @@
 const ADMIN_SESSION_KEY = "scoreboard_admin_session";
 const ADMIN_SESSION_EVENT = "scoreboard-admin-session-change";
-const ADMIN_USERNAME = "admin";
-const ADMIN_PASSWORD = "admin123";
+const ADMIN_USERNAME = process.env.NEXT_PUBLIC_ADMIN_USERNAME ?? "admin";
+const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD ?? "admin123";
 
 export function getAdminSession() {
   if (typeof window === "undefined") {

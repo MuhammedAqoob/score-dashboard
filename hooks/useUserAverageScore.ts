@@ -12,8 +12,6 @@ export function useUserAverageScore(username?: string) {
     let active = true;
 
     const loadScore = async () => {
-      await Promise.resolve();
-
       if (!username) {
         setAverageScore(0);
         setSubmissionCount(0);

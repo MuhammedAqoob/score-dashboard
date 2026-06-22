@@ -13,10 +13,13 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { MetricCard } from "@/components/MetricCard";
+import { ChartPanel } from "@/components/analytics/ChartPanel";
 import { ScoreTrendChart } from "@/components/analytics/ScoreTrendChart";
 import { buildPlatformAnalytics } from "@/services/analyticsService";
 import { Submission } from "@/types/submission";
 import { ValidationEvent } from "@/types/validationEvent";
+import { tooltipStyle } from "@/utils/chartConstants";
 
 type AdminAnalyticsOverviewProps = {
   submissions: Submission[];
@@ -24,51 +27,6 @@ type AdminAnalyticsOverviewProps = {
 };
 
 const ratioColors = ["#34d399", "#ef4444"];
-
-const tooltipStyle = {
-  background: "rgba(9, 9, 11, 0.95)",
-  border: "1px solid rgba(255,255,255,0.10)",
-  borderRadius: 10,
-  color: "#f4f4f5",
-  fontSize: 12,
-  padding: "8px 12px",
-  boxShadow: "0 20px 40px -20px rgba(0,0,0,0.8)",
-} as const;
-
-function InsightCard({
-  label,
-  value,
-  helper,
-}: {
-  label: string;
-  value: string;
-  helper?: string;
-}) {
-  return (
-    <div className="card p-5">
-      <p className="text-xs font-medium text-zinc-400">{label}</p>
-      <p className="mt-2 text-2xl font-bold tracking-tight text-white">{value}</p>
-      {helper && (
-        <p className="mt-1.5 truncate text-xs text-zinc-500">{helper}</p>
-      )}
-    </div>
-  );
-}
-
-function ChartPanel({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="card min-w-0 overflow-hidden p-4 sm:p-5">
-      <h3 className="font-semibold text-white">{title}</h3>
-      <div className="mt-4">{children}</div>
-    </div>
-  );
-}
 
 export function AdminAnalyticsOverview({
   submissions,
@@ -89,12 +47,12 @@ export function AdminAnalyticsOverview({
       </div>
 
       <div className="mt-4 grid gap-3 md:grid-cols-2">
-        <InsightCard
+        <MetricCard
           helper={analytics.strongestCategory?.label}
           label="Strongest Category"
           value={analytics.strongestCategory?.name ?? "-"}
         />
-        <InsightCard
+        <MetricCard
           helper={analytics.weakestCategory?.label}
           label="Weakest Category"
           value={analytics.weakestCategory?.name ?? "-"}

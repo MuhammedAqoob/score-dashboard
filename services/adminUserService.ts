@@ -9,10 +9,8 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { createAdminLog } from "@/services/adminLogService";
-import {
-  getEffectiveUserStatus,
-  isBanExpired,
-} from "@/services/moderationUtils";
+import { isBanExpired } from "@/services/moderationUtils";
+import { checkAndClearExpiredBan } from "@/services/userService";
 import { UserProfileWithId, UserStatus } from "@/types/user";
 
 export function subscribeToUsers(
@@ -24,24 +22,20 @@ export function subscribeToUsers(
   return onSnapshot(
     usersQuery,
     (snapshot) => {
-      snapshot.docs.forEach((userDocument) => {
-        const user = userDocument.data() as UserProfileWithId;
-
-        if (user.status === "banned" && isBanExpired(user.bannedUntil)) {
-          updateDoc(userDocument.ref, {
-            approved: true,
-            status: "approved",
-            bannedUntil: null,
-            banReason: null,
-          }).catch(onError);
-        }
-      });
-
-      onUpdate(
-        snapshot.docs.map((userDocument) => ({
+      const users = snapshot.docs.map((userDocument) => ({
           id: userDocument.id,
           ...(userDocument.data() as Omit<UserProfileWithId, "id">),
-        })),
+        }));
+      const expiredBanUsernames = users
+        .filter(
+          (user) => user.status === "banned" && isBanExpired(user.bannedUntil),
+        )
+        .map((user) => user.username);
+
+      onUpdate(users);
+
+      Promise.all(expiredBanUsernames.map(checkAndClearExpiredBan)).catch(
+        onError,
       );
     },
     onError,
@@ -124,8 +118,4 @@ export async function unbanUser(username: string) {
     targetUsername: username,
     details: "User manually unbanned and approved.",
   });
-}
-
-export function getAdminUserStatus(user: UserProfileWithId) {
-  return getEffectiveUserStatus(user);
 }

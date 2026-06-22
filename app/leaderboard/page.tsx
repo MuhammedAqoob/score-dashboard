@@ -1,23 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Timestamp } from "firebase/firestore";
 import { LeaderboardComparisonModal } from "@/components/LeaderboardComparisonModal";
 import { LeaderboardTopComparisonChart } from "@/components/LeaderboardTopComparisonChart";
 import { useAuth } from "@/hooks/useAuth";
 import { useLeaderboard } from "@/hooks/useLeaderboard";
-
-function formatDate(timestamp?: Timestamp) {
-  if (!timestamp) {
-    return "-";
-  }
-
-  return timestamp.toDate().toLocaleDateString("en-US", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
+import { formatDate } from "@/utils/formatDate";
 
 const medalTokens: Record<
   number,
