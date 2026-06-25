@@ -134,6 +134,23 @@ body::before {
 }
 
 /* ============================================================
+   Recharts — remove the white tap/click focus rectangle that
+   browsers draw on the SVG chart wrapper (esp. bad on mobile),
+   without hurting keyboard accessibility of real controls.
+   ============================================================ */
+.recharts-wrapper,
+.recharts-surface,
+.recharts-surface svg,
+.recharts-wrapper:focus,
+.recharts-wrapper:focus-visible,
+.recharts-surface:focus,
+.recharts-surface:focus-visible,
+.recharts-wrapper svg:focus,
+.recharts-wrapper svg:focus-visible {
+  outline: none !important;
+}
+
+/* ============================================================
    Reusable component classes
    Keeping markup readable while enforcing consistency.
    ============================================================ */

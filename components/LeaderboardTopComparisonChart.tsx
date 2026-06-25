@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   CartesianGrid,
   Line,
   LineChart,
-  ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
@@ -162,6 +161,14 @@ export function LeaderboardTopComparisonChart({
   const { submissions, loading, error } = useComparisonSubmissions(usernames);
   const [selectedLine, setSelectedLine] = useState<string | null>(null);
   const selectionRef = useRef<HTMLElement>(null);
+  const [chartWidth, setChartWidth] = useState(0);
+  const chartContainerRef = useCallback((node: HTMLDivElement | null) => {
+    if (!node) return;
+    const observer = new ResizeObserver(([entry]) => {
+      setChartWidth(entry.contentRect.width);
+    });
+    observer.observe(node);
+  }, []);
   const players = useMemo<ComparisonPlayer[]>(
     () =>
       topEntries.map((entry, index) => ({
@@ -248,16 +255,13 @@ export function LeaderboardTopComparisonChart({
 
       {expanded && !loading && !error && (
         <>
-          <div className="mt-5 h-[560px] w-full max-w-full min-w-0 overflow-hidden sm:h-[620px]">
-            <ResponsiveContainer
-              height="100%"
-              minHeight={1}
-              minWidth={1}
-              width="100%"
-            >
+          <div ref={chartContainerRef} className="mt-5 h-[760px] w-full max-w-full min-w-0 sm:h-[840px]">
+            {chartWidth > 0 && (
               <LineChart
+                width={chartWidth}
+                height={760}
                 data={data}
-                margin={{ bottom: 92, left: 0, right: 12, top: 12 }}
+                margin={{ bottom: 80, left: 0, right: 8, top: 8 }}
               >
                 <CartesianGrid
                   stroke="rgba(255,255,255,0.06)"
@@ -267,7 +271,7 @@ export function LeaderboardTopComparisonChart({
                 <XAxis
                   angle={-40}
                   dataKey="name"
-                  height={92}
+                  height={70}
                   interval={0}
                   stroke="rgba(255,255,255,0.20)"
                   tick={{
@@ -315,7 +319,7 @@ export function LeaderboardTopComparisonChart({
                   />
                 ))}
               </LineChart>
-            </ResponsiveContainer>
+            )}
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
             {players.map((player, index) => {

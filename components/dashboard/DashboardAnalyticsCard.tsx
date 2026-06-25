@@ -1,12 +1,11 @@
 "use client";
 
-import { useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   Bar,
   BarChart,
   CartesianGrid,
   Legend,
-  ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
@@ -112,6 +111,14 @@ export function DashboardAnalyticsCard({
 }) {
   const chartData = useMemo(() => buildUnifiedAnalyticsData(series), [series]);
   const chartHeight = Math.max(430, chartData.length * 64 + 80);
+  const [chartWidth, setChartWidth] = useState(0);
+  const chartContainerRef = useCallback((node: HTMLDivElement | null) => {
+    if (!node) return;
+    const observer = new ResizeObserver(([entry]) => {
+      setChartWidth(entry.contentRect.width);
+    });
+    observer.observe(node);
+  }, []);
 
   return (
     <article className="card min-w-0 overflow-hidden p-5 sm:p-6">
@@ -155,16 +162,14 @@ export function DashboardAnalyticsCard({
 
       {chartData.length > 0 ? (
         <div
-          className="mt-5 w-full max-w-full min-w-0 overflow-hidden"
+          ref={chartContainerRef}
+          className="mt-5 w-full max-w-full min-w-0"
           style={{ height: chartHeight }}
         >
-          <ResponsiveContainer
-            height="100%"
-            minHeight={1}
-            minWidth={1}
-            width="100%"
-          >
+          {chartWidth > 0 && (
             <BarChart
+              width={chartWidth}
+              height={chartHeight}
               barCategoryGap={16}
               barGap={5}
               data={chartData}
@@ -215,7 +220,7 @@ export function DashboardAnalyticsCard({
                 />
               ))}
             </BarChart>
-          </ResponsiveContainer>
+          )}
         </div>
       ) : (
         <p className="mt-4 rounded-xl border border-white/[0.07] bg-white/[0.02] px-4 py-3 text-sm text-zinc-400">

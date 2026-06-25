@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   CartesianGrid,
   Line,
   LineChart,
-  ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
@@ -204,9 +203,17 @@ function PeerComparisonChart({
   currentUsername: string;
   selectedUsername: string;
 }) {
-  const chartHeight = 380;
+  const chartHeight = 600;
   const [selectedLine, setSelectedLine] = useState<string | null>(null);
   const selectionRef = useRef<HTMLElement>(null);
+  const [chartWidth, setChartWidth] = useState(0);
+  const chartContainerRef = useCallback((node: HTMLDivElement | null) => {
+    if (!node) return;
+    const observer = new ResizeObserver(([entry]) => {
+      setChartWidth(entry.contentRect.width);
+    });
+    observer.observe(node);
+  }, []);
   const legendItems = [
     { key: "currentUser", label: currentUsername, color: "#34d399" },
     { key: "selectedUser", label: selectedUsername, color: "#a1a1aa" },
@@ -240,16 +247,13 @@ function PeerComparisonChart({
         </p>
       ) : (
         <>
-          <div className="mt-4 w-full max-w-full min-w-0 overflow-hidden" style={{ height: chartHeight }}>
-            <ResponsiveContainer
-              height="100%"
-              minHeight={1}
-              minWidth={1}
-              width="100%"
-            >
+          <div ref={chartContainerRef} className="mt-4 w-full max-w-full min-w-0" style={{ height: chartHeight }}>
+            {chartWidth > 0 && (
               <LineChart
+                width={chartWidth}
+                height={chartHeight}
                 data={data}
-                margin={{ bottom: 86, left: 0, right: 12, top: 12 }}
+                margin={{ bottom: 80, left: 0, right: 8, top: 8 }}
               >
                 <CartesianGrid
                   vertical={false}
@@ -267,7 +271,7 @@ function PeerComparisonChart({
                   }}
                   tickFormatter={formatAxisLabel}
                   angle={-40}
-                  height={86}
+                  height={70}
                   type="category"
                 />
                 <YAxis
@@ -319,7 +323,7 @@ function PeerComparisonChart({
                   type="monotone"
                 />
               </LineChart>
-            </ResponsiveContainer>
+            )}
           </div>
           <ClickableLegend
             items={legendItems}
